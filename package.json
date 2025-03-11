@@ -6,14 +6,16 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces",
-    "dev": "npm run dev --workspaces --parallel",
-    "lint": "npm run lint --workspaces"
+    "bootstrap": "npm install && npm run build --workspace=shared",
+    "dev": "concurrently \"npm run dev --workspace=backend\" \"npm run dev --workspace=frontend\"",
+    "build": "npm run build --workspace=shared && npm run build --workspace=backend && npm run build --workspace=frontend",
+    "lint": "npm run lint --workspace=backend && npm run lint --workspace=frontend"
   },
   "devDependencies": {
     "prettier": "^3.2.5",
     "turbo": "^1.12.4",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "concurrently": "^8.2.2"
   },
   "packageManager": "npm@10.2.4",
   "engines": {
