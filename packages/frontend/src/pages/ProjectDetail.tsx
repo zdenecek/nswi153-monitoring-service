@@ -26,13 +26,6 @@ interface Project {
   updatedAt: string;
 }
 
-interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
-
 export function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
