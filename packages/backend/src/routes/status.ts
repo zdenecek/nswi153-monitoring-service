@@ -2,7 +2,6 @@ import { Router } from 'express';
 import { Between } from 'typeorm';
 import { AppDataSource } from '../index';
 import { MonitorStatus } from '../entities';
-import { StatusFilter } from '@monitoring-service/shared';
 
 const router = Router();
 
