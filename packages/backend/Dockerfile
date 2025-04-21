@@ -4,15 +4,12 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
-COPY packages/shared/package*.json ./packages/shared/
 COPY packages/backend/package*.json ./packages/backend/
-COPY tsconfig.json ./
 
 # Install dependencies
 RUN npm install
 
 # Copy source code
-COPY packages/shared ./packages/shared
 COPY packages/backend ./packages/backend
 
 # Build shared package
