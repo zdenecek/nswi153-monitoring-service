@@ -1,3 +1,4 @@
+version: '3.8'
 
 services:
   postgres:
@@ -38,8 +39,11 @@ services:
     build:
       context: .
       dockerfile: packages/frontend/Dockerfile
+    volumes:
+      - ./packages/frontend:/app/packages/frontend
+      - /app/packages/frontend/node_modules
     ports:
-      - "3000:80"
+      - "3000:5173"
     environment:
       VITE_API_URL: ${VITE_API_URL:-http://localhost:4000}
       VITE_GRAPHQL_URL: ${VITE_GRAPHQL_URL:-http://localhost:4000/graphql}

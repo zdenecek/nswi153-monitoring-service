@@ -35,12 +35,13 @@ interface MonitorCheck {
 
 interface Monitor {
   id: string;
-  name: string;
-  type: 'ping' | 'http';
+  label: string;
+  type: 'ping' | 'website';
   url: string;
-  interval: number;
-  status: 'up' | 'down' | 'pending';
-  lastCheck: string | null;
+  host: string;
+  periodicity: number;
+  status?: 'up' | 'down' | 'pending';
+  lastCheck?: string | null;
   createdAt: string;
   updatedAt: string;
   checks: MonitorCheck[];
@@ -58,7 +59,9 @@ export function MonitorDetail() {
       if (!response.ok) {
         throw new Error('Failed to fetch monitor');
       }
-      return response.json();
+      const data = await response.json();
+      // Ensure checks exists
+      return { ...data, checks: data.checks || [] };
     },
   });
 
@@ -109,13 +112,13 @@ export function MonitorDetail() {
   }
 
   const chartData = {
-    labels: monitor.checks.map((check) =>
+    labels: (monitor.checks || []).map((check) =>
       new Date(check.timestamp).toLocaleTimeString()
     ),
     datasets: [
       {
         label: 'Response Time (ms)',
-        data: monitor.checks.map((check) => check.responseTime),
+        data: (monitor.checks || []).map((check) => check.responseTime),
         borderColor: 'rgb(59, 130, 246)',
         backgroundColor: 'rgba(59, 130, 246, 0.5)',
       },
@@ -140,9 +143,9 @@ export function MonitorDetail() {
     },
   };
 
-  const uptime = monitor.checks.length
-    ? (monitor.checks.filter((check) => check.status === 'up').length /
-        monitor.checks.length) *
+  const uptime = (monitor.checks || []).length
+    ? ((monitor.checks || []).filter((check) => check.status === 'up').length /
+        (monitor.checks || []).length) *
       100
     : 0;
 
@@ -150,7 +153,7 @@ export function MonitorDetail() {
     <div className="px-4 sm:px-6 lg:px-8">
       <div className="sm:flex sm:items-center">
         <div className="sm:flex-auto">
-          <h1 className="text-2xl font-semibold text-gray-900">{monitor.name}</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">{monitor.label}</h1>
           <p className="mt-2 text-sm text-gray-700">
             {monitor.type.toUpperCase()} monitor for {monitor.url}
           </p>
@@ -193,7 +196,7 @@ export function MonitorDetail() {
                   : 'bg-gray-100 text-gray-800'
               }`}
             >
-              {monitor.status.toUpperCase()}
+              {monitor.status?.toUpperCase()}
             </span>
           </dd>
         </div>
@@ -208,12 +211,12 @@ export function MonitorDetail() {
             Average Response Time
           </dt>
           <dd className="mt-1 text-3xl font-semibold tracking-tight text-gray-900">
-            {monitor.checks.length
+            {(monitor.checks || []).length
               ? (
-                  monitor.checks.reduce(
+                  (monitor.checks || []).reduce(
                     (acc, check) => acc + check.responseTime,
                     0
-                  ) / monitor.checks.length
+                  ) / (monitor.checks || []).length
                 ).toFixed(0)
               : 0}{' '}
             ms
@@ -264,7 +267,7 @@ export function MonitorDetail() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {monitor.checks.map((check) => (
+                  {(monitor.checks || []).map((check) => (
                     <tr key={check.id}>
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-0">
                         {new Date(check.timestamp).toLocaleString()}
@@ -320,9 +323,9 @@ export function MonitorDetail() {
                   type="text"
                   name="name"
                   id="name"
-                  value={editedMonitor.name}
+                  value={editedMonitor.label}
                   onChange={(e) =>
-                    setEditedMonitor({ ...editedMonitor, name: e.target.value })
+                    setEditedMonitor({ ...editedMonitor, label: e.target.value })
                   }
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
                 />
@@ -357,11 +360,11 @@ export function MonitorDetail() {
                   name="interval"
                   id="interval"
                   min="30"
-                  value={editedMonitor.interval}
+                  value={editedMonitor.periodicity}
                   onChange={(e) =>
                     setEditedMonitor({
                       ...editedMonitor,
-                      interval: parseInt(e.target.value, 10),
+                      periodicity: parseInt(e.target.value, 10),
                     })
                   }
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"

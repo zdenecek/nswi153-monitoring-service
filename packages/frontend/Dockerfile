@@ -1,4 +1,4 @@
-FROM node:18-alpine as builder
+FROM node:18-alpine
 
 WORKDIR /app
 
@@ -17,20 +17,11 @@ COPY packages/frontend ./packages/frontend
 # Build shared package
 RUN cd packages/shared && npm run build
 
-# Build frontend
-RUN cd packages/frontend && npm run build
-
-# Production stage
-FROM nginx:alpine
-
-# Copy built assets
-COPY --from=builder /app/packages/frontend/dist /usr/share/nginx/html
-
-# Copy nginx configuration
-COPY packages/frontend/nginx.conf /etc/nginx/conf.d/default.conf
-
 # Expose port
-EXPOSE 80
+EXPOSE 5173
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"] 
+# Set environment variables
+ENV NODE_ENV=development
+
+# Run development server with hot reloading
+CMD ["npm", "run", "dev", "--workspace=frontend", "--", "--host", "0.0.0.0"] 

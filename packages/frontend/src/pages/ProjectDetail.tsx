@@ -7,10 +7,11 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 interface Monitor {
   id: string;
-  name: string;
-  type: 'ping' | 'http';
+  label: string;
+  type: 'ping' | 'website';
   url: string;
-  interval: number;
+  host: string;
+  periodicity: number;
   status: 'up' | 'down' | 'pending';
   lastCheck: string | null;
   createdAt: string;
@@ -29,11 +30,17 @@ interface Project {
 export function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  
+  // Use the field names that match the API
   const [newMonitor, setNewMonitor] = useState({
-    name: '',
-    type: 'http' as 'http' | 'ping',
+    label: '',
+    type: 'website',
     url: '',
     interval: 60,
+    badgeLabel: '',
+    host: '',
+    port: 80
   });
 
   const { data: project, isLoading } = useQuery<Project>({
@@ -49,28 +56,78 @@ export function ProjectDetail() {
 
   const createMonitorMutation = useMutation({
     mutationFn: async (monitor: typeof newMonitor) => {
+      console.log('Creating monitor with data:', monitor, 'projectId:', projectId);
+      
+      // Ensure we have a host for website type
+      let host = monitor.host;
+      if (monitor.type === 'website' && monitor.url && !host) {
+        try {
+          const url = new URL(monitor.url);
+          host = url.hostname;
+          console.log('Extracted host from URL:', host);
+        } catch (error) {
+          console.error('Invalid URL:', monitor.url);
+          throw new Error('Invalid URL format');
+        }
+      }
+      
+      if (!host) {
+        console.error('Host is required but missing');
+        throw new Error('Host is required');
+      }
+      
+      // Based on the error and message, using the provided example payload
+      const payload = {
+        label: monitor.label, 
+        type: monitor.type,
+        url: monitor.type === 'website' ? monitor.url : undefined,
+        periodicity: monitor.interval,
+        projectId: projectId,
+        badgeLabel: monitor.badgeLabel || monitor.label,
+        host: host, // Use extracted host or provided host
+        port: monitor.type === 'ping' ? monitor.port : undefined
+      };
+      
+      console.log('FINAL PAYLOAD:', JSON.stringify(payload));
+      
       const response = await fetch(`${API_URL}/api/monitors`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...monitor,
-          projectId,
-        }),
+        body: JSON.stringify(payload),
       });
-      if (!response.ok) {
-        throw new Error('Failed to create monitor');
+      
+      const text = await response.text();
+      console.log('RESPONSE TEXT:', text);
+      
+      let responseData;
+      try {
+        responseData = text ? JSON.parse(text) : {};
+      } catch (e) {
+        console.error('Failed to parse response:', e);
+        responseData = { error: 'Failed to parse server response' };
       }
-      return response.json();
+      
+      if (!response.ok) {
+        const errorMessage = responseData?.error || 'Failed to create monitor';
+        console.error('Monitor creation failed:', errorMessage);
+        setFormError(errorMessage);
+        throw new Error(errorMessage);
+      }
+      
+      return responseData;
     },
     onSuccess: () => {
       setIsCreateModalOpen(false);
       setNewMonitor({
-        name: '',
-        type: 'http',
+        label: '',
+        type: 'website',
         url: '',
         interval: 60,
+        badgeLabel: '',
+        host: '',
+        port: 80
       });
     },
   });
@@ -134,11 +191,11 @@ export function ProjectDetail() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {project.monitors.map((monitor) => (
+                {project.monitors?.map((monitor) => (
                   <tr key={monitor.id}>
                     <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
                       <Link to={`/monitors/${monitor.id}`} className="hover:text-primary-600">
-                        {monitor.name}
+                        {monitor.label}
                       </Link>
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{monitor.type}</td>
@@ -169,83 +226,223 @@ export function ProjectDetail() {
 
       {isCreateModalOpen && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg px-4 pt-5 pb-4 sm:p-6 sm:pb-4 max-w-lg w-full">
-            <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">Create New Monitor</h3>
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Create New Monitor</h3>
+            
+            {formError && (
+              <div className="mb-4 bg-red-50 border border-red-200 text-red-800 rounded-md p-3">
+                <p className="text-sm font-medium">Error: {formError}</p>
+              </div>
+            )}
+            
             <form
               onSubmit={(e) => {
                 e.preventDefault();
+                
+                // Client-side validation - check required fields
+                if (!newMonitor.label) {
+                  setFormError('Name is required');
+                  return;
+                }
+                
+                if (newMonitor.type === 'website' && !newMonitor.url) {
+                  setFormError('URL is required for Website monitors');
+                  return;
+                }
+                
+                if (!newMonitor.host) {
+                  // For website monitors, try one more time to extract host
+                  if (newMonitor.type === 'website' && newMonitor.url) {
+                    try {
+                      const url = new URL(newMonitor.url);
+                      if (url.hostname) {
+                        // Update the monitor with the hostname before submission
+                        setNewMonitor(prev => ({ ...prev, host: url.hostname }));
+                        // Continue with this updated model
+                        const updatedMonitor = { ...newMonitor, host: url.hostname };
+                        createMonitorMutation.mutate(updatedMonitor);
+                        return;
+                      }
+                    } catch (err) {
+                      // Fall through to error
+                    }
+                  }
+                  
+                  setFormError('Host is required');
+                  return;
+                }
+                
                 createMonitorMutation.mutate(newMonitor);
               }}
             >
               <div className="mb-4">
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                  Name
+                <label htmlFor="label" className="block text-sm font-medium text-gray-700">
+                  Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
-                  name="name"
-                  id="name"
-                  value={newMonitor.name}
-                  onChange={(e) => setNewMonitor({ ...newMonitor, name: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                  id="label"
+                  name="label"
+                  value={newMonitor.label}
+                  onChange={(e) => setNewMonitor({ ...newMonitor, label: e.target.value })}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  required
                 />
               </div>
               <div className="mb-4">
                 <label htmlFor="type" className="block text-sm font-medium text-gray-700">
-                  Type
+                  Type <span className="text-red-500">*</span>
                 </label>
                 <select
-                  name="type"
                   id="type"
+                  name="type"
                   value={newMonitor.type}
-                  onChange={(e) => setNewMonitor({ ...newMonitor, type: e.target.value as 'http' | 'ping' })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                  onChange={(e) => setNewMonitor({ 
+                    ...newMonitor, 
+                    type: e.target.value as 'website' | 'ping'
+                  })}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  required
                 >
-                  <option value="http">HTTP</option>
+                  <option value="website">Website</option>
                   <option value="ping">Ping</option>
                 </select>
               </div>
+
+              {newMonitor.type === 'website' ? (
+                <div className="mb-4">
+                  <label htmlFor="url" className="block text-sm font-medium text-gray-700">
+                    URL <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="url"
+                    id="url"
+                    name="url"
+                    value={newMonitor.url}
+                    onChange={(e) => {
+                      const urlValue = e.target.value;
+                      let hostValue = newMonitor.host;
+                      
+                      // Try to extract host from URL
+                      if (urlValue && e.target.validity.valid) {
+                        try {
+                          const url = new URL(urlValue);
+                          hostValue = url.hostname;
+                        } catch (err) {
+                          // Invalid URL format, keep existing host
+                        }
+                      }
+                      
+                      setNewMonitor({ 
+                        ...newMonitor, 
+                        url: urlValue,
+                        host: hostValue // Always update host when URL changes
+                      });
+                      
+                      // Clear form error if we have a valid URL
+                      if (urlValue && e.target.validity.valid) {
+                        setFormError(null);
+                      }
+                    }}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                    required
+                    placeholder="e.g., https://example.com"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Full URL including protocol (https:// or http://)
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="mb-4">
+                    <label htmlFor="host" className="block text-sm font-medium text-gray-700">
+                      Host <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="host"
+                      name="host"
+                      value={newMonitor.host}
+                      onChange={(e) => setNewMonitor({ ...newMonitor, host: e.target.value })}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                      required
+                      placeholder="e.g., example.com"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Hostname without protocol (e.g. example.com)
+                    </p>
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="port" className="block text-sm font-medium text-gray-700">
+                      Port <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      id="port"
+                      name="port"
+                      min="1"
+                      max="65535"
+                      value={newMonitor.port}
+                      onChange={(e) => setNewMonitor({ ...newMonitor, port: parseInt(e.target.value) })}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                      required
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Port number (1-65535)
+                    </p>
+                  </div>
+                </>
+              )}
               <div className="mb-4">
-                <label htmlFor="url" className="block text-sm font-medium text-gray-700">
-                  URL
+                <label htmlFor="badgeLabel" className="block text-sm font-medium text-gray-700">
+                  Badge Label <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
-                  name="url"
-                  id="url"
-                  value={newMonitor.url}
-                  onChange={(e) => setNewMonitor({ ...newMonitor, url: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                  id="badgeLabel"
+                  name="badgeLabel"
+                  value={newMonitor.badgeLabel}
+                  onChange={(e) => setNewMonitor({ ...newMonitor, badgeLabel: e.target.value })}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  placeholder="Short label for status badge"
                 />
+                <p className="mt-1 text-xs text-gray-500">
+                  Short label used on the status badge (defaults to Name if left empty)
+                </p>
               </div>
               <div className="mb-4">
                 <label htmlFor="interval" className="block text-sm font-medium text-gray-700">
-                  Check Interval (seconds)
+                  Check Interval (seconds) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="number"
-                  name="interval"
                   id="interval"
-                  min="30"
+                  name="interval"
+                  min="5"
+                  max="300"
                   value={newMonitor.interval}
-                  onChange={(e) => setNewMonitor({ ...newMonitor, interval: parseInt(e.target.value, 10) })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                  onChange={(e) => setNewMonitor({ ...newMonitor, interval: parseInt(e.target.value) })}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  required
                 />
+                <p className="mt-1 text-xs text-gray-500">
+                  Must be between 5 and 300 seconds
+                </p>
               </div>
-              <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
-                <button
-                  type="submit"
-                  disabled={createMonitorMutation.isPending}
-                  className="inline-flex w-full justify-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 sm:col-start-2"
-                >
-                  {createMonitorMutation.isPending ? 'Creating...' : 'Create'}
-                </button>
+              <div className="mt-6 flex justify-end space-x-3">
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
+                  className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                 >
                   Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700"
+                  disabled={createMonitorMutation.isPending}
+                >
+                  {createMonitorMutation.isPending ? 'Creating...' : 'Create'}
                 </button>
               </div>
             </form>

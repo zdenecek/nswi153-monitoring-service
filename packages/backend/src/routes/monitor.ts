@@ -149,7 +149,13 @@ router.post('/', async (req, res) => {
 
     // Validate required fields
     if (!label || !type || !periodicity || !projectId || !badgeLabel) {
-      return res.status(400).json({ error: 'Missing required fields' });
+      const missingFields = [];
+      if (!label) missingFields.push('label');
+      if (!type) missingFields.push('type'); 
+      if (!periodicity) missingFields.push('periodicity');
+      if (!projectId) missingFields.push('projectId');
+      if (!badgeLabel) missingFields.push('badgeLabel');
+      return res.status(400).json({ error: 'Missing required fields', missingFields });
     }
 
     // Validate periodicity
@@ -177,8 +183,19 @@ router.post('/', async (req, res) => {
     if (type === 'ping') {
       monitor.host = host;
       monitor.port = port;
+      // Set a placeholder URL for ping monitors to satisfy the not-null constraint
+      monitor.url = `ping://${host}:${port}`;
     } else if (type === 'website') {
       monitor.url = url;
+      
+      // Extract and set host from URL for website monitors
+      try {
+        const urlObj = new URL(url);
+        monitor.host = urlObj.hostname;
+      } catch (error) {
+        return res.status(400).json({ error: 'Invalid URL format' });
+      }
+      
       monitor.checkStatus = checkStatus;
       monitor.keywords = keywords || [];
     }
@@ -219,7 +236,20 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Monitor not found' });
     }
 
-    res.json(monitor);
+    // Transform the statuses into a format the frontend expects
+    const checks = monitor.statuses ? monitor.statuses.map(status => ({
+      id: status.id,
+      status: status.status === 'succeeded' ? 'up' : 'down',
+      responseTime: status.responseTime,
+      timestamp: status.startTime,
+      error: status.error
+    })) : [];
+
+    // Return the monitor with the checks array
+    res.json({
+      ...monitor,
+      checks
+    });
   } catch (error) {
     console.error('Error fetching monitor:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -304,10 +334,27 @@ router.put('/:id', async (req, res) => {
 
     // Update type-specific fields
     if (monitor.type === 'ping') {
-      if (host) monitor.host = host;
-      if (port) monitor.port = port;
+      if (host) {
+        monitor.host = host;
+        // Update the URL placeholder when host changes
+        monitor.url = `ping://${host}:${port || monitor.port || 80}`;
+      }
+      if (port) {
+        monitor.port = port;
+        // Update the URL placeholder when port changes
+        monitor.url = `ping://${monitor.host}:${port}`;
+      }
     } else if (monitor.type === 'website') {
-      if (url) monitor.url = url;
+      if (url) {
+        monitor.url = url;
+        // Update host when URL changes
+        try {
+          const urlObj = new URL(url);
+          monitor.host = urlObj.hostname;
+        } catch (error) {
+          return res.status(400).json({ error: 'Invalid URL format' });
+        }
+      }
       if (checkStatus !== undefined) monitor.checkStatus = checkStatus;
       if (keywords) monitor.keywords = keywords;
     }
