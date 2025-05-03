@@ -60,15 +60,38 @@ export function MonitorDetail() {
         throw new Error('Failed to fetch monitor');
       }
       const data = await response.json();
-      // Ensure checks exists
-      return { ...data, checks: data.checks || [] };
+      
+      // Ensure checks exists - handle both checks and statuses arrays
+      const checks = data.checks || data.statuses?.map(status => ({
+        id: status.id,
+        status: status.status === 'succeeded' ? 'up' : 'down',
+        responseTime: status.responseTime,
+        timestamp: status.startTime,
+        error: status.error
+      })) || [];
+      
+      // Determine current status from the most recent check
+      let currentStatus = data.status;
+      if (!currentStatus && checks.length > 0) {
+        // Sort checks by timestamp (newest first)
+        const sortedChecks = [...checks].sort((a, b) => 
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        );
+        currentStatus = sortedChecks[0].status;
+      }
+      
+      return { 
+        ...data,
+        checks,
+        status: currentStatus || 'pending'
+      };
     },
   });
 
   const updateMonitorMutation = useMutation({
     mutationFn: async (data: Partial<Monitor>) => {
       const response = await fetch(`${API_URL}/api/monitors/${monitorId}`, {
-        method: 'PATCH',
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },

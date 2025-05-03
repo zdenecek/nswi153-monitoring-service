@@ -77,6 +77,7 @@ npm run dev
 ├── packages/
 │   ├── backend/         # Express backend
 │   ├── frontend/        # React frontend
+│   ├── engine/          # Monitoring engine (runs checks)
 │   └── shared/          # Shared types and utilities
 ├── docker/              # Docker configuration
 ├── docker-compose.yml   # Docker compose configuration

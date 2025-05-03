@@ -134,6 +134,8 @@ router.get('/', async (req, res) => {
  */
 router.post('/', async (req, res) => {
   try {
+    console.log('Monitor POST request received, body:', JSON.stringify(req.body));
+    
     const {
       label,
       type,
@@ -147,6 +149,11 @@ router.post('/', async (req, res) => {
       keywords,
     } = req.body;
 
+    console.log('Extracted fields:', { 
+      label, type, periodicity, projectId, badgeLabel, 
+      host, port, url, checkStatus, keywords 
+    });
+
     // Validate required fields
     if (!label || !type || !periodicity || !projectId || !badgeLabel) {
       const missingFields = [];
@@ -155,6 +162,8 @@ router.post('/', async (req, res) => {
       if (!periodicity) missingFields.push('periodicity');
       if (!projectId) missingFields.push('projectId');
       if (!badgeLabel) missingFields.push('badgeLabel');
+      
+      console.log('Missing required fields:', missingFields);
       return res.status(400).json({ error: 'Missing required fields', missingFields });
     }
 
