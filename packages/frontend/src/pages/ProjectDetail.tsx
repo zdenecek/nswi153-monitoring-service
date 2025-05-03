@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { PlusIcon } from '@heroicons/react/24/outline';
+import React from 'react';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -43,16 +44,56 @@ export function ProjectDetail() {
     port: 80
   });
 
-  const { data: project, isLoading } = useQuery<Project>({
+  const { data: project, isLoading, refetch } = useQuery<Project>({
     queryKey: ['project', projectId],
     queryFn: async () => {
       const response = await fetch(`${API_URL}/api/projects/${projectId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch project');
       }
-      return response.json();
+      const projectData = await response.json();
+      console.log('Project data received:', projectData);
+
+      // If we have monitors, fetch each one's detailed data to get the status
+      if (projectData.monitors && projectData.monitors.length > 0) {
+        // Create array of promises, one for each monitor fetch
+        const monitorPromises = projectData.monitors.map(async (monitor: any) => {
+          try {
+            const monitorResponse = await fetch(`${API_URL}/api/monitors/${monitor.id}`);
+            if (!monitorResponse.ok) {
+              console.error(`Failed to fetch monitor ${monitor.id}`);
+              return monitor; // Return original on error
+            }
+            
+            const monitorData = await monitorResponse.json();
+            console.log(`Monitor ${monitor.id} data:`, monitorData);
+            
+            // Return monitor with status from detail endpoint
+            return {
+              ...monitor,
+              status: monitorData.status || 'pending',
+              lastCheck: monitorData.lastCheck || null
+            };
+          } catch (error) {
+            console.error(`Error fetching monitor ${monitor.id}:`, error);
+            return monitor; // Return original on error
+          }
+        });
+        
+        // Wait for all monitor fetches to complete
+        projectData.monitors = await Promise.all(monitorPromises);
+        console.log('Monitors with status:', projectData.monitors);
+      }
+      
+      return projectData;
     },
   });
+
+  // Force a refresh of the data when component mounts
+  useEffect(() => {
+    console.log('ProjectDetail mounted, refreshing data');
+    refetch();
+  }, [refetch]);
 
   const createMonitorMutation = useMutation({
     mutationFn: async (monitor: typeof newMonitor) => {
@@ -155,7 +196,17 @@ export function ProjectDetail() {
           <h1 className="text-2xl font-semibold text-gray-900">{project.label}</h1>
           <p className="mt-2 text-sm text-gray-700">{project.description}</p>
         </div>
-        <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+        <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none space-x-3">
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="inline-flex items-center rounded-md bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm hover:bg-gray-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-500"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="-ml-0.5 mr-1.5 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Refresh
+          </button>
           <button
             type="button"
             onClick={() => setIsCreateModalOpen(true)}
@@ -191,33 +242,36 @@ export function ProjectDetail() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {project.monitors?.map((monitor) => (
-                  <tr key={monitor.id}>
-                    <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
-                      <Link to={`/monitors/${monitor.id}`} className="hover:text-primary-600">
-                        {monitor.label}
-                      </Link>
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{monitor.type}</td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{monitor.url}</td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm">
-                      <span
-                        className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                          monitor.status === 'up'
-                            ? 'bg-green-100 text-green-800'
-                            : monitor.status === 'down'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {monitor.status}
-                      </span>
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      {monitor.lastCheck ? new Date(monitor.lastCheck).toLocaleString() : 'Never'}
-                    </td>
-                  </tr>
-                ))}
+                {project.monitors?.map((monitor) => {
+                  console.log('Rendering monitor:', monitor.id, 'Status:', monitor.status);
+                  return (
+                    <tr key={monitor.id}>
+                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
+                        <Link to={`/monitors/${monitor.id}`} className="hover:text-primary-600">
+                          {monitor.label}
+                        </Link>
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{monitor.type}</td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{monitor.url}</td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm">
+                        <span
+                          className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
+                            monitor.status === 'up'
+                              ? 'bg-green-100 text-green-800'
+                              : monitor.status === 'down'
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-gray-100 text-gray-800'
+                          }`}
+                        >
+                          {monitor.status ? monitor.status.toUpperCase() : 'PENDING'}
+                        </span>
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        {monitor.lastCheck ? new Date(monitor.lastCheck).toLocaleString() : 'Never'}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

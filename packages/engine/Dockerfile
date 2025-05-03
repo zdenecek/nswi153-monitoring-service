@@ -8,7 +8,16 @@ COPY packages/shared/ ./packages/shared/
 COPY packages/engine/ ./packages/engine/
 
 RUN npm install
-RUN npm run build --workspace=shared
-RUN npm run build --workspace=engine
 
-CMD ["node", "packages/engine/dist/index.js"] 
+# Build shared package
+WORKDIR /app/packages/shared
+RUN npm run build
+
+# Build engine package
+WORKDIR /app/packages/engine
+RUN npm run build
+
+# Set working directory back to engine for the CMD
+WORKDIR /app/packages/engine
+
+CMD ["node", "--experimental-specifier-resolution=node", "dist/index.js"] 

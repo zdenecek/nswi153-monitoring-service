@@ -1,12 +1,11 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
-import { Monitor } from './Monitor';
 
 @Entity()
 export class Project {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column()
+  @Column('text')
   label!: string;
 
   @Column('text')
@@ -15,8 +14,8 @@ export class Project {
   @Column('simple-array')
   tags!: string[];
 
-  @OneToMany(() => Monitor, (monitor: Monitor) => monitor.project)
-  monitors!: Monitor[];
+  @OneToMany('Monitor', 'project')
+  monitors!: any[];
 
   @CreateDateColumn()
   createdAt!: Date;

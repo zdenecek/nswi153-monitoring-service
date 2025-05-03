@@ -1,9 +1,10 @@
+import 'reflect-metadata';
 import 'dotenv/config';
-import { AppDataSource, initializeDatabase } from './db';
-import { Monitor, MonitorType } from './entities/Monitor';
-import { MonitorStatus } from './entities/MonitorStatus';
-import { runPingMonitor } from './runners/ping-monitor';
-import { runWebsiteMonitor } from './runners/website-monitor';
+import { AppDataSource, initializeDatabase } from './db.js';
+import { Monitor, MonitorType } from './entities/Monitor.js';
+import { MonitorStatus } from './entities/MonitorStatus.js';
+import { runPingMonitor } from './runners/ping-monitor.js';
+import { runWebsiteMonitor } from './runners/website-monitor.js';
 
 // How often to check for new monitors (in milliseconds)
 const MONITOR_DISCOVERY_INTERVAL = 10 * 1000; // 10 seconds
@@ -49,6 +50,7 @@ function scheduleMonitor(monitor: Monitor): void {
   }
   
   const runAndReschedule = async () => {
+    console.log(`Running monitor check for ${monitor.label} (${monitor.id})`);
     await runMonitorCheck(monitor);
     
     // Re-fetch the monitor to get updated configuration

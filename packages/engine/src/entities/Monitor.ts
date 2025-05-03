@@ -1,6 +1,4 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
-import { Project } from './Project';
-import { MonitorStatus } from './MonitorStatus';
 
 export type MonitorType = 'ping' | 'website';
 
@@ -9,7 +7,7 @@ export class Monitor {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column()
+  @Column('text')
   label!: string;
 
   @Column({
@@ -18,23 +16,23 @@ export class Monitor {
   })
   type!: MonitorType;
 
-  @Column()
+  @Column('text')
   url!: string;
 
-  @Column()
+  @Column('text')
   host!: string;
 
   @Column('int')
   periodicity!: number;
 
-  @Column()
+  @Column('text')
   badgeLabel: string;
 
   // Ping monitor fields
-  @Column({ nullable: true })
+  @Column('int', { nullable: true })
   port?: number;
 
-  @Column({ nullable: true })
+  @Column('boolean', { nullable: true })
   checkStatus?: boolean;
 
   @Column('simple-array', { nullable: true })
@@ -43,12 +41,12 @@ export class Monitor {
   @Column('uuid')
   projectId!: string;
 
-  @ManyToOne(() => Project, (project: Project) => project.monitors)
+  @ManyToOne('Project', 'monitors')
   @JoinColumn({ name: 'projectId' })
-  project!: Project;
+  project!: any;
 
-  @OneToMany(() => MonitorStatus, (status: MonitorStatus) => status.monitor)
-  statuses!: MonitorStatus[];
+  @OneToMany('MonitorStatus', 'monitor')
+  statuses!: any[]; // Type will be inferred by TypeORM
 
   @CreateDateColumn()
   createdAt!: Date;

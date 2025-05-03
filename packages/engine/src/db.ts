@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { DataSource } from 'typeorm';
-import { entities } from './entities';
+import { entities } from './entities/index.js';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',

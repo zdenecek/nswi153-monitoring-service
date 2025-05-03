@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "description": "Monitoring engine that runs monitor checks",
   "main": "dist/index.js",
+  "type": "module",
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "ts-node-dev --respawn src/index.ts",
+    "dev": "tsx watch src/index.ts",
     "lint": "eslint \"src/**/*.ts\""
   },
   "dependencies": {
@@ -23,7 +24,9 @@
     "@typescript-eslint/eslint-plugin": "^7.0.1",
     "@typescript-eslint/parser": "^7.0.1",
     "eslint": "^8.56.0",
+    "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
+    "tsx": "^4.7.1",
     "typescript": "^5.3.3"
   }
 } 

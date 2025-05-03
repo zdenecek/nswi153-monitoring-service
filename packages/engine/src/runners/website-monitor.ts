@@ -1,6 +1,6 @@
 import fetch, { Response } from 'node-fetch';
-import { Monitor } from '../entities/Monitor';
-import { MonitorStatus, StatusType } from '../entities/MonitorStatus';
+import { Monitor } from '../entities/Monitor.js';
+import { MonitorStatus, StatusType } from '../entities/MonitorStatus.js';
 
 /**
  * Run a website monitor check
@@ -19,8 +19,8 @@ export async function runWebsiteMonitor(monitor: Monitor): Promise<MonitorStatus
       method: 'GET',
       headers: {
         'User-Agent': 'MonitoringService/1.0'
-      },
-      timeout: 10000, // 10 second timeout
+      }, 
+      signal: AbortSignal.timeout(10000)  // 10 second timeout
     });
     
     // Check status code if checkStatus is enabled

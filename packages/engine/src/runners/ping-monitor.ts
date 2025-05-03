@@ -1,6 +1,6 @@
 import * as net from 'net';
-import { Monitor } from '../entities/Monitor';
-import { MonitorStatus, StatusType } from '../entities/MonitorStatus';
+import { Monitor } from '../entities/Monitor.js';
+import { MonitorStatus, StatusType } from '../entities/MonitorStatus.js';
 
 /**
  * Run a ping monitor check

@@ -1,5 +1,4 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { Monitor } from './Monitor';
 
 export type StatusType = 'succeeded' | 'failed';
 
@@ -23,9 +22,11 @@ export class MonitorStatus {
   @Column('uuid')
   monitorId!: string;
 
-  @ManyToOne(() => Monitor, (monitor: Monitor) => monitor.statuses)
+  @ManyToOne('Monitor', 'statuses', { 
+    createForeignKeyConstraints: false 
+  })
   @JoinColumn({ name: 'monitorId' })
-  monitor!: Monitor;
+  monitor!: any; // Type will be inferred by TypeORM
 
   @CreateDateColumn()
   startTime!: Date;

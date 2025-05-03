@@ -154,6 +154,9 @@ router.post('/', async (req, res) => {
  */
 router.get('/:id', async (req, res) => {
   try {
+    console.log('Fetching project with id:', req.params.id);
+    
+    // Get the project with monitors but without statuses
     const project = await AppDataSource.getRepository(Project).findOne({
       where: { id: req.params.id },
       relations: ['monitors'],
@@ -162,7 +165,9 @@ router.get('/:id', async (req, res) => {
     if (!project) {
       return res.status(404).json({ error: 'Project not found' });
     }
-
+    
+    // Simply return the project with monitors
+    // The frontend will handle fetching the status information
     res.json(project);
   } catch (error) {
     console.error('Error fetching project:', error);
