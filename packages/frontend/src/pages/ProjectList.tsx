@@ -11,6 +11,7 @@ interface Project {
   description: string;
   createdAt: string;
   updatedAt: string;
+  tags?: string[];
 }
 
 interface PaginatedResponse<T> {
@@ -22,7 +23,7 @@ interface PaginatedResponse<T> {
 
 export function ProjectList() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [newProject, setNewProject] = useState({ label: '', description: '' });
+  const [newProject, setNewProject] = useState({ label: '', description: '', tags: '' });
 
   const { data: projectsResponse, isLoading } = useQuery<PaginatedResponse<Project>>({
     queryKey: ['projects'],
@@ -36,13 +37,20 @@ export function ProjectList() {
   });
 
   const createProjectMutation = useMutation({
-    mutationFn: async (project: { label: string; description: string }) => {
+    mutationFn: async (project: { label: string; description: string; tags: string }) => {
+      const payload = {
+        label: project.label,
+        description: project.description,
+        tags: project.tags
+          ? project.tags.split(',').map((tag) => tag.trim()).filter(Boolean)
+          : [],
+      };
       const response = await fetch(`${API_URL}/api/projects`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(project),
+        body: JSON.stringify(payload),
       });
       if (!response.ok) {
         throw new Error('Failed to create project');
@@ -51,7 +59,7 @@ export function ProjectList() {
     },
     onSuccess: () => {
       setIsCreateModalOpen(false);
-      setNewProject({ label: '', description: '' });
+      setNewProject({ label: '', description: '', tags: '' });
     },
   });
 
@@ -98,6 +106,15 @@ export function ProjectList() {
                 <span className="absolute inset-0" aria-hidden="true" />
                 <p className="text-sm font-medium text-gray-900">{project.label}</p>
                 <p className="text-sm text-gray-500 truncate">{project.description}</p>
+                {project.tags && project.tags.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {project.tags.map((tag) => (
+                      <span key={tag} className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </Link>
@@ -138,6 +155,20 @@ export function ProjectList() {
                   value={newProject.description}
                   onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="tags" className="block text-sm font-medium text-gray-700">
+                  Tags (comma-separated)
+                </label>
+                <input
+                  type="text"
+                  name="tags"
+                  id="tags"
+                  value={newProject.tags}
+                  onChange={(e) => setNewProject({ ...newProject, tags: e.target.value })}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                  placeholder="e.g. uptime, critical, website"
                 />
               </div>
               <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">

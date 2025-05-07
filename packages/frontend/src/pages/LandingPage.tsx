@@ -7,8 +7,7 @@ export function LandingPage() {
         Welcome to Monitoring Service
       </h1>
       <p className="mt-6 text-lg leading-8 text-gray-600">
-        A modern monitoring service that helps you track the status of your services and endpoints.
-        Monitor your infrastructure with ease using our powerful monitoring tools.
+        A modern monitoring service demo for the Advanced Web Applications course at Charles University.
       </p>
       <div className="mt-10 flex items-center justify-center gap-x-6">
         <Link
@@ -17,16 +16,16 @@ export function LandingPage() {
         >
           Get Started
         </Link>
-        <a
+        {/* <a
           href="https://github.com/yourusername/monitoring-service"
           className="text-sm font-semibold leading-6 text-gray-900"
           target="_blank"
           rel="noopener noreferrer"
         >
           View on GitHub <span aria-hidden="true">→</span>
-        </a>
+        </a> */}
       </div>
-
+{/* 
       <div className="mt-20">
         <h2 className="text-2xl font-bold text-gray-900">Features</h2>
         <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
@@ -67,7 +66,7 @@ export function LandingPage() {
             </p>
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 } 

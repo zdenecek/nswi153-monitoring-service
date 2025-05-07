@@ -238,21 +238,29 @@ router.get('/:id', async (req, res) => {
   try {
     const monitor = await AppDataSource.getRepository(Monitor).findOne({
       where: { id: req.params.id },
-      relations: ['project', 'statuses'],
+      relations: ['project'],
     });
 
     if (!monitor) {
       return res.status(404).json({ error: 'Monitor not found' });
     }
 
+    // Fetch the last 100 statuses for this monitor, ordered by startTime DESC
+    const statuses = await AppDataSource.getRepository('MonitorStatus')
+      .createQueryBuilder('status')
+      .where('status.monitorId = :monitorId', { monitorId: req.params.id })
+      .orderBy('status.startTime', 'DESC')
+      .limit(100)
+      .getMany();
+
     // Transform the statuses into a format the frontend expects
-    const checks = monitor.statuses ? monitor.statuses.map(status => ({
+    const checks = statuses.map(status => ({
       id: status.id,
       status: status.status === 'succeeded' ? 'up' : 'down',
       responseTime: status.responseTime,
       timestamp: status.startTime,
       error: status.error
-    })) : [];
+    }));
 
     // Return the monitor with the checks array
     res.json({
