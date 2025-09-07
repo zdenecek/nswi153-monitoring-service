@@ -3,23 +3,16 @@ FROM node:18-alpine
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
-COPY packages/frontend/package*.json ./packages/frontend/
+COPY packages/frontend/package*.json ./
 
 # Install dependencies
 RUN npm install
 
 # Copy source code
-COPY packages/frontend ./packages/frontend
-
-# Build shared package
-RUN cd packages/shared && npm run build
+COPY packages/frontend ./
 
 # Expose port
 EXPOSE 5173
 
-# Set environment variables
-ENV NODE_ENV=development
-
-# Run development server with hot reloading
-CMD ["npm", "run", "dev", "--workspace=frontend", "--", "--host", "0.0.0.0"] 
+# Start the development server
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"] 

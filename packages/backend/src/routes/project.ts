@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { AppDataSource } from '../index';
 import { Project } from '../entities';
-import { ProjectFilter } from '@monitoring-service/shared';
+import { ProjectFilter } from '../types';
 
 const router = Router();
 

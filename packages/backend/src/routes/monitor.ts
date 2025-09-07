@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { AppDataSource } from '../index';
 import { Monitor } from '../entities';
-import { MonitorFilter, MonitorType } from '@monitoring-service/shared';
+import { MonitorFilter, MonitorType } from '../types';
 
 const router = Router();
 
