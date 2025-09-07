@@ -40,8 +40,8 @@ services:
       context: .
       dockerfile: packages/frontend/Dockerfile
     volumes:
-      - ./packages/frontend:/app/packages/frontend
-      - /app/packages/frontend/node_modules
+      - ./packages/frontend:/app
+      - /app/node_modules
     ports:
       - "3000:5173"
     environment:

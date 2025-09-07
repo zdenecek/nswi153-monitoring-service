@@ -524,7 +524,7 @@ export function ProjectDetail() {
                   placeholder="Short label for status badge"
                 />
                 <p className="mt-1 text-xs text-gray-500">
-                  Short label used on the status badge (defaults to Name if left empty)
+                  Short label used on the status badge 
                 </p>
               </div>
               <div className="mb-4">

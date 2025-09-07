@@ -24,6 +24,7 @@ interface PaginatedResponse<T> {
 export function ProjectList() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newProject, setNewProject] = useState({ label: '', description: '', tags: '' });
+  const [formError, setFormError] = useState<string | null>(null);
 
   const { data: projectsResponse, isLoading } = useQuery<PaginatedResponse<Project>>({
     queryKey: ['projects'],
@@ -53,13 +54,18 @@ export function ProjectList() {
         body: JSON.stringify(payload),
       });
       if (!response.ok) {
-        throw new Error('Failed to create project');
+        const errorData = await response.json().catch(() => ({ error: 'Failed to create project' }));
+        throw new Error(errorData.error || 'Failed to create project');
       }
       return response.json();
     },
     onSuccess: () => {
       setIsCreateModalOpen(false);
       setNewProject({ label: '', description: '', tags: '' });
+      setFormError(null);
+    },
+    onError: (error: Error) => {
+      setFormError(error.message);
     },
   });
 
@@ -125,15 +131,35 @@ export function ProjectList() {
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg px-4 pt-5 pb-4 sm:p-6 sm:pb-4 max-w-lg w-full">
             <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">Create New Project</h3>
+            
+            {formError && (
+              <div className="mb-4 bg-red-50 border border-red-200 text-red-800 rounded-md p-3">
+                <p className="text-sm font-medium">Error: {formError}</p>
+              </div>
+            )}
+            
             <form
               onSubmit={(e) => {
                 e.preventDefault();
+                setFormError(null);
+                
+                // Client-side validation
+                if (!newProject.label.trim()) {
+                  setFormError('Project name is required');
+                  return;
+                }
+                
+                if (!newProject.description.trim()) {
+                  setFormError('Project description is required');
+                  return;
+                }
+                
                 createProjectMutation.mutate(newProject);
               }}
             >
               <div className="mb-4">
                 <label htmlFor="label" className="block text-sm font-medium text-gray-700">
-                  Name
+                  Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -141,12 +167,17 @@ export function ProjectList() {
                   id="label"
                   value={newProject.label}
                   onChange={(e) => setNewProject({ ...newProject, label: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                  className={`mt-1 block w-full rounded-md shadow-sm focus:ring-primary-500 sm:text-sm ${
+                    formError && !newProject.label.trim() 
+                      ? 'border-red-300 focus:border-red-500' 
+                      : 'border-gray-300 focus:border-primary-500'
+                  }`}
+                  placeholder="Enter project name"
                 />
               </div>
               <div className="mb-4">
                 <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                  Description
+                  Description <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   name="description"
@@ -154,7 +185,12 @@ export function ProjectList() {
                   rows={3}
                   value={newProject.description}
                   onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                  className={`mt-1 block w-full rounded-md shadow-sm focus:ring-primary-500 sm:text-sm ${
+                    formError && !newProject.description.trim() 
+                      ? 'border-red-300 focus:border-red-500' 
+                      : 'border-gray-300 focus:border-primary-500'
+                  }`}
+                  placeholder="Enter project description"
                 />
               </div>
               <div className="mb-4">
@@ -181,7 +217,11 @@ export function ProjectList() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setIsCreateModalOpen(false)}
+                  onClick={() => {
+                    setIsCreateModalOpen(false);
+                    setFormError(null);
+                    setNewProject({ label: '', description: '', tags: '' });
+                  }}
                   className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
                 >
                   Cancel
