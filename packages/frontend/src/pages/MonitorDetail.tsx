@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Line } from 'react-chartjs-2';
 import {
@@ -45,12 +45,14 @@ interface Monitor {
   createdAt: string;
   updatedAt: string;
   checks: MonitorCheck[];
+  projectId: string
 }
-
 export function MonitorDetail() {
   const { monitorId } = useParams<{ monitorId: string }>();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editedMonitor, setEditedMonitor] = useState<Partial<Monitor> | null>(null);
+  const navigate = useNavigate();
+
 
   const { data: monitor, isLoading } = useQuery<Monitor>({
     queryKey: ['monitor', monitorId],
@@ -60,7 +62,7 @@ export function MonitorDetail() {
         throw new Error('Failed to fetch monitor');
       }
       const data = await response.json();
-      
+
       // Ensure checks exists - handle both checks and statuses arrays
       const checks = data.checks || data.statuses?.map(status => ({
         id: status.id,
@@ -69,18 +71,18 @@ export function MonitorDetail() {
         timestamp: status.startTime,
         error: status.error
       })) || [];
-      
+
       // Determine current status from the most recent check
       let currentStatus = data.status;
       if (!currentStatus && checks.length > 0) {
         // Sort checks by timestamp (newest first)
-        const sortedChecks = [...checks].sort((a, b) => 
+        const sortedChecks = [...checks].sort((a, b) =>
           new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
         );
         currentStatus = sortedChecks[0].status;
       }
-      
-      return { 
+
+      return {
         ...data,
         checks,
         status: currentStatus || 'pending'
@@ -106,15 +108,23 @@ export function MonitorDetail() {
       setIsEditModalOpen(false);
     },
   });
-
   const deleteMonitorMutation = useMutation({
     mutationFn: async () => {
       const response = await fetch(`${API_URL}/api/monitors/${monitorId}`, {
         method: 'DELETE',
       });
+
       if (!response.ok) {
         throw new Error('Failed to delete monitor');
       }
+    },
+    onSuccess: () => {
+      if (monitor?.projectId) {
+        navigate(`/projects/${monitor.projectId}`);
+      } else {
+        navigate('/projects'); // fallback if no projectId
+      }
+
     },
   });
 
@@ -168,8 +178,8 @@ export function MonitorDetail() {
 
   const uptime = (monitor.checks || []).length
     ? ((monitor.checks || []).filter((check) => check.status === 'up').length /
-        (monitor.checks || []).length) *
-      100
+      (monitor.checks || []).length) *
+    100
     : 0;
 
   return (
@@ -211,13 +221,12 @@ export function MonitorDetail() {
           <dt className="truncate text-sm font-medium text-gray-500">Status</dt>
           <dd className="mt-1 text-3xl font-semibold tracking-tight text-gray-900">
             <span
-              className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                monitor.status === 'up'
-                  ? 'bg-green-100 text-green-800'
-                  : monitor.status === 'down'
+              className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${monitor.status === 'up'
+                ? 'bg-green-100 text-green-800'
+                : monitor.status === 'down'
                   ? 'bg-red-100 text-red-800'
                   : 'bg-gray-100 text-gray-800'
-              }`}
+                }`}
             >
               {monitor.status?.toUpperCase()}
             </span>
@@ -236,11 +245,11 @@ export function MonitorDetail() {
           <dd className="mt-1 text-3xl font-semibold tracking-tight text-gray-900">
             {(monitor.checks || []).length
               ? (
-                  (monitor.checks || []).reduce(
-                    (acc, check) => acc + check.responseTime,
-                    0
-                  ) / (monitor.checks || []).length
-                ).toFixed(0)
+                (monitor.checks || []).reduce(
+                  (acc, check) => acc + check.responseTime,
+                  0
+                ) / (monitor.checks || []).length
+              ).toFixed(0)
               : 0}{' '}
             ms
           </dd>
@@ -297,11 +306,10 @@ export function MonitorDetail() {
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm">
                         <span
-                          className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                            check.status === 'up'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}
+                          className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${check.status === 'up'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                            }`}
                         >
                           {check.status.toUpperCase()}
                         </span>

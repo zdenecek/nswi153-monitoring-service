@@ -23,7 +23,7 @@ export class MonitorStatus {
   @Column('uuid')
   monitorId!: string;
 
-  @ManyToOne(() => Monitor, (monitor: Monitor) => monitor.statuses)
+  @ManyToOne(() => Monitor, (monitor: Monitor) => monitor.statuses, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
   @JoinColumn({ name: 'monitorId' })
   monitor!: Monitor;
 
