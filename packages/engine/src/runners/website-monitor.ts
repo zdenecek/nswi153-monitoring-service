@@ -13,6 +13,10 @@ export async function runWebsiteMonitor(monitor: Monitor): Promise<MonitorStatus
   let error: string | undefined;
   let response: Response | null = null;
   
+  console.log(`Running website monitor for ${monitor.url}`);
+  console.log(`Monitor keywords:`, monitor.keywords);
+  console.log(`Monitor checkStatus:`, monitor.checkStatus);
+  
   try {
     // For website monitors, make an HTTP request
     response = await fetch(monitor.url, {
@@ -25,23 +29,42 @@ export async function runWebsiteMonitor(monitor: Monitor): Promise<MonitorStatus
     
     // Check status code if checkStatus is enabled
     if (monitor.checkStatus && (response.status < 200 || response.status >= 300)) {
+      status = 'failed';
       error = `HTTP status code ${response.status}`;
+      console.log(`Status code check failed: ${response.status}`);
     } else {
       // At this point, we have a response, which might still fail based on keywords
       status = 'succeeded';
+      console.log(`Status code check passed: ${response.status}`);
       
       // If keywords are defined, check if they are in the response
       if (monitor.keywords && monitor.keywords.length > 0) {
         const text = await response.text();
+        console.log(`Response text length: ${text.length}`);
+        console.log(`Response text preview (first 500 chars):`, text.substring(0, 500));
+        console.log(`Looking for keywords:`, monitor.keywords);
         
         // Check if all keywords are present
         for (const keyword of monitor.keywords) {
-          if (keyword && !text.includes(keyword)) {
+          console.log(`Checking keyword: "${keyword}"`);
+          console.log(`Keyword length: ${keyword.length}`);
+          console.log(`Keyword trimmed: "${keyword.trim()}"`);
+          console.log(`Keyword trimmed length: ${keyword.trim().length}`);
+          
+          // Filter out empty strings and whitespace-only strings
+          if (keyword && keyword.trim() && !text.includes(keyword.trim())) {
+            console.log(`❌ Keyword "${keyword}" NOT found in response`);
             status = 'failed';
             error = `Keyword "${keyword}" not found in response`;
             break;
+          } else if (keyword && keyword.trim()) {
+            console.log(`✅ Keyword "${keyword}" found in response`);
+          } else {
+            console.log(`⚠️ Skipping empty/whitespace keyword: "${keyword}"`);
           }
         }
+      } else {
+        console.log('No keywords to check');
       }
     }
   } catch (err) {
@@ -53,6 +76,8 @@ export async function runWebsiteMonitor(monitor: Monitor): Promise<MonitorStatus
   
   const endTime = Date.now();
   const responseTime = endTime - startTime;
+  
+  console.log(`Final monitor status: ${status}, error: ${error || 'none'}`);
   
   // Create the monitor status object
   return new MonitorStatus({

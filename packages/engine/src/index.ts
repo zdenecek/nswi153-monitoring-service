@@ -97,6 +97,14 @@ async function discoverMonitors(): Promise<void> {
     
     // Schedule any new or updated monitors
     for (const monitor of monitors) {
+      if (monitor.type === 'website') {
+        console.log(`Website monitor ${monitor.label}:`, {
+          id: monitor.id,
+          url: monitor.url,
+          keywords: monitor.keywords,
+          checkStatus: monitor.checkStatus
+        });
+      }
       if (!currentMonitorIds.has(monitor.id)) {
         scheduleMonitor(monitor);
       }

@@ -207,6 +207,8 @@ router.post('/', async (req, res) => {
       
       monitor.checkStatus = checkStatus;
       monitor.keywords = keywords || [];
+      console.log('Setting keywords for website monitor:', keywords);
+      console.log('Monitor keywords after setting:', monitor.keywords);
     }
 
     const savedMonitor = await AppDataSource.getRepository(Monitor).save(monitor);
@@ -373,7 +375,11 @@ router.put('/:id', async (req, res) => {
         }
       }
       if (checkStatus !== undefined) monitor.checkStatus = checkStatus;
-      if (keywords) monitor.keywords = keywords;
+      if (keywords) {
+        console.log('Updating keywords for website monitor:', keywords);
+        monitor.keywords = keywords;
+        console.log('Monitor keywords after update:', monitor.keywords);
+      }
     }
 
     const updatedMonitor = await AppDataSource.getRepository(Monitor).save(monitor);
