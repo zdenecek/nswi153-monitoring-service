@@ -45,7 +45,12 @@ interface Monitor {
   createdAt: string;
   updatedAt: string;
   checks: MonitorCheck[];
-  projectId: string
+  projectId: string;
+  // Website monitor specific fields
+  checkStatus?: boolean;
+  keywords?: string[];
+  // Ping monitor specific fields
+  port?: number;
 }
 export function MonitorDetail() {
   const { monitorId } = useParams<{ monitorId: string }>();
@@ -64,7 +69,7 @@ export function MonitorDetail() {
       const data = await response.json();
 
       // Ensure checks exists - handle both checks and statuses arrays
-      const checks = data.checks || data.statuses?.map(status => ({
+      const checks = data.checks || data.statuses?.map((status: any) => ({
         id: status.id,
         status: status.status === 'succeeded' ? 'up' : 'down',
         responseTime: status.responseTime,
@@ -256,6 +261,51 @@ export function MonitorDetail() {
         </div>
       </div>
 
+      {monitor.type === 'website' && (monitor.checkStatus || (monitor.keywords && monitor.keywords.length > 0)) && (
+        <div className="mt-8">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Monitor Configuration</h2>
+          <div className="overflow-hidden rounded-lg bg-white shadow">
+            <div className="px-4 py-5 sm:p-6">
+              <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                {monitor.checkStatus && (
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Status Code Check</dt>
+                    <dd className="mt-1 text-sm text-gray-900">
+                      <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
+                        Enabled
+                      </span>
+                      <p className="mt-1 text-xs text-gray-500">
+                        Monitor fails when HTTP status is not in range [200, 300)
+                      </p>
+                    </dd>
+                  </div>
+                )}
+                {monitor.keywords && monitor.keywords.length > 0 && (
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Keywords</dt>
+                    <dd className="mt-1 text-sm text-gray-900">
+                      <div className="flex flex-wrap gap-1 items-center justify-center">
+                        {monitor.keywords.map((keyword, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800"
+                          >
+                            {keyword}
+                          </span>
+                        ))}
+                      </div>
+                      <p className="mt-1 text-xs text-gray-500">
+                        Monitor fails if any keyword is not found in response
+                      </p>
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mt-8">
         <div className="overflow-hidden rounded-lg bg-white shadow">
           <div className="p-6">
@@ -339,6 +389,11 @@ export function MonitorDetail() {
               onSubmit={(e) => {
                 e.preventDefault();
                 if (editedMonitor) {
+                  // Validate periodicity range
+                  if (editedMonitor.periodicity && (editedMonitor.periodicity < 5 || editedMonitor.periodicity > 300)) {
+                    alert('Check interval must be between 5 and 300 seconds');
+                    return;
+                  }
                   updateMonitorMutation.mutate(editedMonitor);
                 }
               }}
@@ -379,6 +434,56 @@ export function MonitorDetail() {
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
                 />
               </div>
+              
+              {editedMonitor.type === 'website' && (
+                <>
+                  <div className="mb-4">
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="checkStatus"
+                        name="checkStatus"
+                        checked={editedMonitor.checkStatus || false}
+                        onChange={(e) =>
+                          setEditedMonitor({ ...editedMonitor, checkStatus: e.target.checked })
+                        }
+                        className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor="checkStatus" className="ml-2 block text-sm text-gray-700">
+                        Check HTTP status code
+                      </label>
+                    </div>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Monitor fails when status is not in range [200, 300)
+                    </p>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <label htmlFor="keywords" className="block text-sm font-medium text-gray-700">
+                      Keywords
+                    </label>
+                    <input
+                      type="text"
+                      id="keywords"
+                      name="keywords"
+                      value={(editedMonitor.keywords || []).join(', ')}
+                      onChange={(e) => {
+                        const keywords = e.target.value
+                          .split(',')
+                          .map(k => k.trim())
+                          .filter(k => k.length > 0);
+                        setEditedMonitor({ ...editedMonitor, keywords });
+                      }}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                      placeholder="keyword1, keyword2, keyword3"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Comma-separated keywords. Monitor fails if any keyword is not found in response.
+                    </p>
+                  </div>
+                </>
+              )}
+              
               <div className="mb-4">
                 <label
                   htmlFor="interval"
@@ -390,7 +495,8 @@ export function MonitorDetail() {
                   type="number"
                   name="interval"
                   id="interval"
-                  min="30"
+                  min="5"
+                  max="300"
                   value={editedMonitor.periodicity}
                   onChange={(e) =>
                     setEditedMonitor({
@@ -400,6 +506,9 @@ export function MonitorDetail() {
                   }
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
                 />
+                <p className="mt-1 text-xs text-gray-500">
+                  Must be between 5 and 300 seconds
+                </p>
               </div>
               <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
                 <button
