@@ -48,40 +48,39 @@ function scheduleMonitor(monitor: Monitor): void {
   if (activeMonitors.has(monitor.id)) {
     clearTimeout(activeMonitors.get(monitor.id)!);
   }
-  
-  const runAndReschedule = async () => {
-    console.log(`Running monitor check for ${monitor.label} (${monitor.id})`);
-    await runMonitorCheck(monitor);
-    
-    // Re-fetch the monitor to get updated configuration
+
+  const runAndReschedule = async (monitorId: string) => {
     try {
-      const refreshedMonitor = await AppDataSource.getRepository(Monitor).findOne({
-        where: { id: monitor.id }
-      });
-      
-      if (refreshedMonitor) {
-        // Schedule the next run
-        const timeout = setTimeout(runAndReschedule, refreshedMonitor.periodicity * 1000);
-        activeMonitors.set(refreshedMonitor.id, timeout);
-      } else {
-        // Monitor was deleted, remove from active monitors
-        activeMonitors.delete(monitor.id);
-        console.log(`Monitor ${monitor.id} was removed, stopping checks`);
+      // Always use the latest config
+      const repo = AppDataSource.getRepository(Monitor);
+      const current = await repo.findOne({ where: { id: monitorId } });
+
+      if (!current) {
+        // Monitor was deleted
+        activeMonitors.delete(monitorId);
+        console.log(`Monitor ${monitorId} was removed, stopping checks`);
+        return
       }
+
+      console.log(`Running monitor check for ${current.label} (${current.id})`);
+      await runMonitorCheck(current);
+
+      // Schedule next run based on *current* periodicity
+      const timeout = setTimeout(() => runAndReschedule(monitorId), current.periodicity * 1000);
+      activeMonitors.set(monitorId, timeout);
     } catch (error) {
-      console.error(`Error refreshing monitor ${monitor.id}:`, error);
+      console.error(`Error running/rescheduling monitor ${monitorId}:`, error);
       // Try again later
-      const timeout = setTimeout(runAndReschedule, monitor.periodicity * 1000);
-      activeMonitors.set(monitor.id, timeout);
+      const timeout = setTimeout(() => runAndReschedule(monitorId), monitor.periodicity);
+      activeMonitors.set(monitorId, timeout);
     }
   };
-  
-  // Start the first run
-  const timeout = setTimeout(runAndReschedule, 0);
+
+  // Kick off first run immediately
+  const timeout = setTimeout(() => runAndReschedule(monitor.id), 0);
   activeMonitors.set(monitor.id, timeout);
   console.log(`Scheduled monitor ${monitor.label} (${monitor.id}) to run every ${monitor.periodicity} seconds`);
 }
-
 /**
  * Discover monitors from the database and schedule them
  */
