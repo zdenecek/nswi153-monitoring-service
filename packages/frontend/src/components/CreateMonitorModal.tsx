@@ -30,7 +30,7 @@ interface CreateMonitorModalProps {
 export function CreateMonitorModal({ isOpen, onClose, projectId }: CreateMonitorModalProps) {
   const [formError, setFormError] = useState<string | null>(null);
   const queryClient = useQueryClient();
-  
+
   // Use the field names that match the API
   const [newMonitor, setNewMonitor] = useState({
     label: '',
@@ -92,34 +92,34 @@ export function CreateMonitorModal({ isOpen, onClose, projectId }: CreateMonitor
     <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
         <h3 className="text-lg font-medium text-gray-900 mb-4">Create New Monitor</h3>
-        
+
         {formError && (
           <div className="mb-4 bg-red-50 border border-red-200 text-red-800 rounded-md p-3">
             <p className="text-sm font-medium">Error: {formError}</p>
           </div>
         )}
-        
+
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            
+
             // Client-side validation - check required fields
             if (!newMonitor.label) {
               setFormError('Name is required');
               return;
             }
-            
+
             if (newMonitor.type === 'website' && !newMonitor.url) {
               setFormError('URL is required for Website monitors');
               return;
             }
-            
+
             // Validate periodicity range
             if (newMonitor.interval < 5 || newMonitor.interval > 300) {
               setFormError('Check interval must be between 5 and 300 seconds');
               return;
             }
-            
+
             if (!newMonitor.host) {
               // For website monitors, try one more time to extract host
               if (newMonitor.type === 'website' && newMonitor.url) {
@@ -137,11 +137,11 @@ export function CreateMonitorModal({ isOpen, onClose, projectId }: CreateMonitor
                   // Fall through to error
                 }
               }
-              
+
               setFormError('Host is required');
               return;
             }
-            
+
             createMonitorMutation.mutate(newMonitor);
           }}
         >
@@ -159,7 +159,7 @@ export function CreateMonitorModal({ isOpen, onClose, projectId }: CreateMonitor
               required
             />
           </div>
-          
+
           <div className="mb-4">
             <label htmlFor="type" className="block text-sm font-medium text-gray-700">
               Type <span className="text-red-500">*</span>
@@ -168,8 +168,8 @@ export function CreateMonitorModal({ isOpen, onClose, projectId }: CreateMonitor
               id="type"
               name="type"
               value={newMonitor.type}
-              onChange={(e) => setNewMonitor({ 
-                ...newMonitor, 
+              onChange={(e) => setNewMonitor({
+                ...newMonitor,
                 type: e.target.value as 'website' | 'ping'
               })}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
@@ -193,7 +193,7 @@ export function CreateMonitorModal({ isOpen, onClose, projectId }: CreateMonitor
                 onChange={(e) => {
                   const urlValue = e.target.value;
                   let hostValue = newMonitor.host;
-                  
+
                   // Try to extract host from URL
                   if (urlValue && e.target.validity.valid) {
                     try {
@@ -203,13 +203,13 @@ export function CreateMonitorModal({ isOpen, onClose, projectId }: CreateMonitor
                       // Invalid URL format, keep existing host
                     }
                   }
-                  
-                  setNewMonitor({ 
-                    ...newMonitor, 
+
+                  setNewMonitor({
+                    ...newMonitor,
                     url: urlValue,
                     host: hostValue // Always update host when URL changes
                   });
-                  
+
                   // Clear form error if we have a valid URL
                   if (urlValue && e.target.validity.valid) {
                     setFormError(null);
@@ -245,7 +245,7 @@ export function CreateMonitorModal({ isOpen, onClose, projectId }: CreateMonitor
                   Monitor fails when status is not in range [200, 300)
                 </p>
               </div>
-              
+
               <div className="mb-4">
                 <label htmlFor="keywords" className="block text-sm font-medium text-gray-700">
                   Keywords
@@ -254,14 +254,14 @@ export function CreateMonitorModal({ isOpen, onClose, projectId }: CreateMonitor
                   type="text"
                   id="keywords"
                   name="keywords"
-                  value={newMonitor.keywords.join(', ')}
+                  value={newMonitor.keywords.join(',')}
                   onChange={(e) => {
                     const keywords = e.target.value
                       .split(',')
-                      .map(k => k.trim())
-                      .filter(k => k.length > 0);
+                      .map(k => k.trim());
                     setNewMonitor({ ...newMonitor, keywords });
                   }}
+
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                   placeholder="keyword1, keyword2, keyword3"
                 />
@@ -313,7 +313,7 @@ export function CreateMonitorModal({ isOpen, onClose, projectId }: CreateMonitor
               </div>
             </>
           ) : null}
-          
+
           <div className="mb-4">
             <label htmlFor="badgeLabel" className="block text-sm font-medium text-gray-700">
               Badge Label <span className="text-red-500">*</span>
@@ -328,10 +328,10 @@ export function CreateMonitorModal({ isOpen, onClose, projectId }: CreateMonitor
               placeholder="Short label for status badge"
             />
             <p className="mt-1 text-xs text-gray-500">
-              Short label used on the status badge 
+              Short label used on the status badge
             </p>
           </div>
-          
+
           <div className="mb-4">
             <label htmlFor="interval" className="block text-sm font-medium text-gray-700">
               Check Interval (seconds) <span className="text-red-500">*</span>
@@ -351,7 +351,7 @@ export function CreateMonitorModal({ isOpen, onClose, projectId }: CreateMonitor
               Must be between 5 and 300 seconds
             </p>
           </div>
-          
+
           <div className="mt-6 flex justify-end space-x-3">
             <button
               type="button"

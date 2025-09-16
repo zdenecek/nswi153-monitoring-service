@@ -390,11 +390,23 @@ export function MonitorDetail() {
                 e.preventDefault();
                 if (editedMonitor) {
                   // Validate periodicity range
-                  if (editedMonitor.periodicity && (editedMonitor.periodicity < 5 || editedMonitor.periodicity > 300)) {
+                  if (
+                    editedMonitor.periodicity &&
+                    (editedMonitor.periodicity < 5 || editedMonitor.periodicity > 300)
+                  ) {
                     alert('Check interval must be between 5 and 300 seconds');
                     return;
                   }
-                  updateMonitorMutation.mutate(editedMonitor);
+
+                  // ✅ clean up keywords just before sending
+                  const cleanKeywords = (editedMonitor.keywords || [])
+                    .map(k => k.trim())
+                    .filter(Boolean);
+
+                  updateMonitorMutation.mutate({
+                    ...editedMonitor,
+                    keywords: cleanKeywords,
+                  });
                 }
               }}
             >
@@ -434,7 +446,7 @@ export function MonitorDetail() {
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
                 />
               </div>
-              
+
               {editedMonitor.type === 'website' && (
                 <>
                   <div className="mb-4">
@@ -457,7 +469,7 @@ export function MonitorDetail() {
                       Monitor fails when status is not in range [200, 300)
                     </p>
                   </div>
-                  
+
                   <div className="mb-4">
                     <label htmlFor="keywords" className="block text-sm font-medium text-gray-700">
                       Keywords
@@ -466,12 +478,11 @@ export function MonitorDetail() {
                       type="text"
                       id="keywords"
                       name="keywords"
-                      value={(editedMonitor.keywords || []).join(', ')}
+                      value={(editedMonitor.keywords || []).join(',')}
                       onChange={(e) => {
                         const keywords = e.target.value
                           .split(',')
-                          .map(k => k.trim())
-                          .filter(k => k.length > 0);
+                          .map(k => k.trim());
                         setEditedMonitor({ ...editedMonitor, keywords });
                       }}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
@@ -483,7 +494,7 @@ export function MonitorDetail() {
                   </div>
                 </>
               )}
-              
+
               <div className="mb-4">
                 <label
                   htmlFor="interval"
