@@ -21,9 +21,9 @@ export function Layout() {
                 <div className="flex h-16 justify-between">
                   <div className="flex">
                     <div className="flex flex-shrink-0 items-center">
-                      <span className="text-xl font-bold text-primary-600">
-                        Monitoring Service
-                      </span>
+                      <Link to="/" className="text-xl font-bold text-primary-600">
+                        Yet Another Monitoring Service
+                      </Link>
                     </div>
                     <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
                       {navigation.map((item) => (
