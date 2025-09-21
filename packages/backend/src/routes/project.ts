@@ -65,8 +65,21 @@ router.get('/', async (req, res) => {
       queryBuilder.andWhere('project.label ILIKE :label', { label: `%${filter.label}%` });
     }
 
-    if (filter.tags?.length) {
-      queryBuilder.andWhere('project.tags @> :tags', { tags: filter.tags });
+    const rawTagsParam = req.query.tags;
+    const parsedTags = Array.isArray(rawTagsParam)
+      ? rawTagsParam
+      : typeof rawTagsParam === 'string'
+        ? rawTagsParam.split(',')
+        : [];
+
+    const normalizedTags = parsedTags
+      .map((tag) => tag?.toString().trim())
+      .filter((tag): tag is string => Boolean(tag?.length));
+
+    if (normalizedTags.length) {
+      queryBuilder.andWhere("string_to_array(project.tags, ',') @> :tags::text[]", {
+        tags: normalizedTags,
+      });
     }
 
     if (filter.sortBy) {

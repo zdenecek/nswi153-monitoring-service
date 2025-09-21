@@ -10,7 +10,7 @@ export interface MonitorFilter {
 
 export interface ProjectFilter {
   label?: string;
-  tags?: string[];
+  tags?: string | string[];
   page?: number;
   pageSize?: number;
   sortBy?: 'label' | 'createdAt';
