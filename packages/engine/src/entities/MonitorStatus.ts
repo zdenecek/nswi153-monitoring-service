@@ -33,7 +33,7 @@ export class MonitorStatus {
     createForeignKeyConstraints: false,
   })
   @JoinColumn({ name: "monitorId" })
-  monitor!: any; // Type will be inferred by TypeORM
+  monitor!: unknown; // Type will be inferred by TypeORM
 
   @CreateDateColumn()
   startTime!: Date;

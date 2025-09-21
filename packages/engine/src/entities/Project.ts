@@ -22,7 +22,7 @@ export class Project {
   tags!: string[];
 
   @OneToMany("Monitor", "project")
-  monitors!: any[];
+  monitors!: unknown[];
 
   @CreateDateColumn()
   createdAt!: Date;

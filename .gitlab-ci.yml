@@ -1,0 +1,103 @@
+stages:
+  - lint
+  - build
+  - test
+
+variables:
+  NODE_VERSION: "18"
+
+# Prettier linting job
+prettier:
+  stage: lint
+  image: node:${NODE_VERSION}
+  before_script:
+    - npm install -g prettier
+  script:
+    - npx prettier --check "**/*.{js,jsx,ts,tsx,json,css,scss,md}"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# ESLint for frontend
+lint-frontend:
+  stage: lint
+  image: node:${NODE_VERSION}
+  script:
+    - cd packages/frontend
+    - npm ci
+    - npm run lint
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# ESLint for backend
+lint-backend:
+  stage: lint
+  image: node:${NODE_VERSION}
+  script:
+    - cd packages/backend
+    - npm install
+    - npm run lint
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# ESLint for engine
+lint-engine:
+  stage: lint
+  image: node:${NODE_VERSION}
+  script:
+    - cd packages/engine
+    - npm install
+    - npm run lint
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# Build frontend
+build-frontend:
+  stage: build
+  image: node:${NODE_VERSION}
+  script:
+    - cd packages/frontend
+    - npm ci
+    - npm run build
+  artifacts:
+    paths:
+      - packages/frontend/dist
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# Build backend
+build-backend:
+  stage: build
+  image: node:${NODE_VERSION}
+  script:
+    - cd packages/backend
+    - npm install
+    - npm run build
+  artifacts:
+    paths:
+      - packages/backend/dist
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# Build engine
+build-engine:
+  stage: build
+  image: node:${NODE_VERSION}
+  script:
+    - cd packages/engine
+    - npm install
+    - npm run build
+  artifacts:
+    paths:
+      - packages/engine/dist
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

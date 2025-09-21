@@ -57,7 +57,7 @@ export function MonitorDetail() {
       // Ensure checks exists - handle both checks and statuses arrays
       const checks =
         data.checks ||
-        data.statuses?.map((status: any) => ({
+        data.statuses?.map((status: { id: string; status: string; responseTime?: number; startTime: string; error?: string }) => ({
           id: status.id,
           status: status.status === "succeeded" ? "up" : "down",
           responseTime: status.responseTime,
