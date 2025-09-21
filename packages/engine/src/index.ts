@@ -1,7 +1,7 @@
 import "reflect-metadata";
 import "dotenv/config";
 import { AppDataSource, initializeDatabase } from "./db.js";
-import { Monitor, MonitorType } from "./entities/Monitor.js";
+import { Monitor } from "./entities/Monitor.js";
 import { MonitorStatus } from "./entities/MonitorStatus.js";
 import { runPingMonitor } from "./runners/ping-monitor.js";
 import { runWebsiteMonitor } from "./runners/website-monitor.js";
