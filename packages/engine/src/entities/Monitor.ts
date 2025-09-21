@@ -52,10 +52,10 @@ export class Monitor {
 
   @ManyToOne("Project", "monitors")
   @JoinColumn({ name: "projectId" })
-  project!: any;
+  project!: unknown;
 
   @OneToMany("MonitorStatus", "monitor")
-  statuses!: any[]; // Type will be inferred by TypeORM
+  statuses!: unknown[]; // Type will be inferred by TypeORM
 
   @CreateDateColumn()
   createdAt!: Date;

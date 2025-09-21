@@ -57,7 +57,6 @@ export function ProjectDetail() {
     data: project,
     isLoading,
     refetch,
-    isFetching,
   } = useQuery<Project>({
     queryKey: ["project", projectId],
     queryFn: async () => {
@@ -72,7 +71,7 @@ export function ProjectDetail() {
       if (projectData.monitors && projectData.monitors.length > 0) {
         // Create an array of promises for concurrent fetching
         const monitorPromises = projectData.monitors.map(
-          async (monitor: any) => {
+          async (monitor: { id: string }) => {
             try {
               const monitorResponse = await fetch(
                 `${API_URL}/api/monitors/${monitor.id}`,

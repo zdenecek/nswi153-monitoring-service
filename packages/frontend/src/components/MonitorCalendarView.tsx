@@ -20,8 +20,8 @@ interface DayStatus {
 export function MonitorCalendarView({ checks }: MonitorCalendarViewProps) {
   // Get current date and calculate 3 months range
   const today = new Date();
-  const startDate = new Date(today.getFullYear(), today.getMonth() - 2, 1);
-  const endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  // const startDate = new Date(today.getFullYear(), today.getMonth() - 2, 1);
+  // const endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
   // Group checks by day
   const checksByDay = new Map<string, MonitorCheck[]>();
@@ -149,9 +149,9 @@ export function MonitorCalendarView({ checks }: MonitorCalendarViewProps) {
     }
   };
 
-  const getCurrentMonthIndex = () => {
-    return today.getMonth();
-  };
+  // const getCurrentMonthIndex = () => {
+  //   return today.getMonth();
+  // };
 
   return (
     <div className="mt-8">
