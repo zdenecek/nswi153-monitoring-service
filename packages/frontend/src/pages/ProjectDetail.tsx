@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { CreateMonitorModal } from '../components/CreateMonitorModal';
+import { EditProjectModal } from '../components/EditProjectModal';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -34,11 +35,6 @@ interface Project {
   tags?: string[];
 }
 
-interface ProjectFormState {
-  label: string;
-  description: string;
-  tags: string;
-}
 
 type MonitorTypeFilter = Monitor['type'] | 'all';
 type MonitorStatusFilter = Monitor['status'] | 'all';
@@ -47,14 +43,9 @@ const MONITORS_PAGE_SIZE = 5;
 
 export function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
+  const navigate = useNavigate();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isEditingProject, setIsEditingProject] = useState(false);
-  const [projectFormError, setProjectFormError] = useState<string | null>(null);
-  const [projectForm, setProjectForm] = useState<ProjectFormState>({
-    label: '',
-    description: '',
-    tags: '',
-  });
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [filters, setFilters] = useState<{ label: string; type: MonitorTypeFilter; status: MonitorStatusFilter}>(
     { label: '', type: 'all', status: 'all' }
   );
@@ -108,6 +99,22 @@ export function ProjectDetail() {
               lastCheck = sortedStatuses[0].startTime;
             }
             
+            // Only use 'pending' if there are absolutely no checks available
+            if (status === 'pending' && (monitorData.checks?.length > 0 || monitorData.statuses?.length > 0)) {
+              // If we have checks but somehow didn't get a status, use the most recent check result
+              if (monitorData.checks?.length > 0) {
+                const sortedChecks = [...monitorData.checks].sort(
+                  (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+                );
+                status = sortedChecks[0].status;
+              } else if (monitorData.statuses?.length > 0) {
+                const sortedStatuses = [...monitorData.statuses].sort(
+                  (a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+                );
+                status = sortedStatuses[0].status === 'succeeded' ? 'up' : 'down';
+              }
+            }
+            
             console.log(`Monitor ${monitor.id} status: ${status}, lastCheck: ${lastCheck}`);
             
             // Return monitor with updated status information
@@ -146,46 +153,11 @@ export function ProjectDetail() {
     return () => clearInterval(refreshInterval);
   }, [refetch]);
 
-  useEffect(() => {
-    if (project && !isEditingProject) {
-      setProjectForm({
-        label: project.label,
-        description: project.description,
-        tags: project.tags?.join(', ') ?? '',
-      });
-    }
-  }, [project, isEditingProject]);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [filters]);
 
-  const updateProjectMutation = useMutation({
-    mutationFn: async (payload: { label: string; description: string; tags: string[] }) => {
-      const response = await fetch(`${API_URL}/api/projects/${projectId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update project');
-      }
-
-      return response.json();
-    },
-    onSuccess: () => {
-      setProjectFormError(null);
-      setIsEditingProject(false);
-      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
-    },
-    onError: (error: Error) => {
-      setProjectFormError(error.message);
-    },
-  });
 
   const deleteMonitorMutation = useMutation({
     mutationFn: async (monitorId: string) => {
@@ -200,6 +172,25 @@ export function ProjectDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+    },
+    onError: (error: Error) => {
+      window.alert(error.message);
+    },
+  });
+
+  const deleteProjectMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch(`${API_URL}/api/projects/${projectId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete project');
+      }
+    },
+    onSuccess: () => {
+      navigate('/projects');
     },
     onError: (error: Error) => {
       window.alert(error.message);
@@ -231,6 +222,12 @@ export function ProjectDetail() {
   const handleDeleteMonitor = (monitorId: string) => {
     if (window.confirm('Are you sure you want to delete this monitor?')) {
       deleteMonitorMutation.mutate(monitorId);
+    }
+  };
+
+  const handleDeleteProject = () => {
+    if (window.confirm('Are you sure you want to delete this entire project? This will also delete all monitors in this project. This action cannot be undone.')) {
+      deleteProjectMutation.mutate();
     }
   };
 
@@ -267,25 +264,11 @@ export function ProjectDetail() {
             </div>
           )}
         </div>
-        <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none space-x-3">
+        <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none flex space-x-3">
           <button
             type="button"
-            onClick={() => {
-              if (isEditingProject) {
-                return;
-              }
-              if (project) {
-                setProjectForm({
-                  label: project.label,
-                  description: project.description,
-                  tags: project.tags?.join(', ') ?? '',
-                });
-              }
-              setProjectFormError(null);
-              setIsEditingProject(true);
-            }}
-            disabled={isEditingProject}
-            className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:text-gray-400 disabled:ring-gray-200"
+            onClick={() => setIsEditModalOpen(true)}
+            className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
           >
             Edit Project
           </button>
@@ -301,6 +284,14 @@ export function ProjectDetail() {
           </button>
           <button
             type="button"
+            onClick={handleDeleteProject}
+            disabled={deleteProjectMutation.isPending}
+            className="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 disabled:cursor-not-allowed disabled:bg-red-400"
+          >
+            {deleteProjectMutation.isPending ? 'Deleting…' : 'Delete Project'}
+          </button>
+          <button
+            type="button"
             onClick={() => setIsCreateModalOpen(true)}
             className="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
           >
@@ -310,111 +301,6 @@ export function ProjectDetail() {
         </div>
       </div>
 
-      {isEditingProject && (
-        <div className="mt-6 rounded-lg bg-white p-6 shadow">
-          <h2 className="text-lg font-medium text-gray-900">Edit Project Details</h2>
-          {projectFormError && (
-            <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-              {projectFormError}
-            </div>
-          )}
-          <form
-            className="mt-4 space-y-4"
-            onSubmit={(e) => {
-              e.preventDefault();
-              setProjectFormError(null);
-
-              const trimmedLabel = projectForm.label.trim();
-              const trimmedDescription = projectForm.description.trim();
-
-              if (!trimmedLabel) {
-                setProjectFormError('Label is required.');
-                return;
-              }
-
-              if (!trimmedDescription) {
-                setProjectFormError('Description is required.');
-                return;
-              }
-
-              const tags = projectForm.tags
-                .split(',')
-                .map((tag) => tag.trim())
-                .filter((tag) => tag.length > 0);
-
-              updateProjectMutation.mutate({
-                label: trimmedLabel,
-                description: trimmedDescription,
-                tags,
-              });
-            }}
-          >
-            <div>
-              <label htmlFor="projectLabel" className="block text-sm font-medium text-gray-700">
-                Label
-              </label>
-              <input
-                id="projectLabel"
-                type="text"
-                value={projectForm.label}
-                onChange={(e) =>
-                  setProjectForm((prev) => ({ ...prev, label: e.target.value }))
-                }
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-              />
-            </div>
-            <div>
-              <label htmlFor="projectDescription" className="block text-sm font-medium text-gray-700">
-                Description
-              </label>
-              <textarea
-                id="projectDescription"
-                rows={3}
-                value={projectForm.description}
-                onChange={(e) =>
-                  setProjectForm((prev) => ({ ...prev, description: e.target.value }))
-                }
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-              />
-            </div>
-            <div>
-              <label htmlFor="projectTags" className="block text-sm font-medium text-gray-700">
-                Tags
-              </label>
-              <input
-                id="projectTags"
-                type="text"
-                value={projectForm.tags}
-                onChange={(e) =>
-                  setProjectForm((prev) => ({ ...prev, tags: e.target.value }))
-                }
-                placeholder="tag-one, tag-two"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-              />
-              <p className="mt-1 text-xs text-gray-500">Comma-separated list of tags.</p>
-            </div>
-            <div className="flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsEditingProject(false);
-                  setProjectFormError(null);
-                }}
-                className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={updateProjectMutation.isPending}
-                className="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:cursor-not-allowed disabled:bg-primary-400"
-              >
-                {updateProjectMutation.isPending ? 'Saving...' : 'Save Changes'}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div>
@@ -505,15 +391,7 @@ export function ProjectDetail() {
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{monitor.type}</td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{monitor.url}</td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm">
-                        {isFetching ? (
-                          <span className="inline-flex items-center rounded-full bg-gray-100 px-2 text-xs font-semibold leading-5 text-gray-800">
-                            <svg className="-ml-0.5 mr-1.5 h-2 w-2 animate-spin text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            UPDATING
-                          </span>
-                        ) : (
+                        {(
                           <span
                             className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
                               monitor.status === 'up'
@@ -600,6 +478,14 @@ export function ProjectDetail() {
         onClose={() => setIsCreateModalOpen(false)}
         projectId={projectId!}
       />
+
+      {project && (
+        <EditProjectModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          project={project}
+        />
+      )}
     </div>
   );
 } 

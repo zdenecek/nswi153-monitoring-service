@@ -4,7 +4,7 @@ export function LandingPage() {
   return (
     <div className="text-center">
       <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
-        Welcome to Monitoring Service
+        Welcome to Yet Another Monitoring Service
       </h1>
       <p className="mt-6 text-lg leading-8 text-gray-600">
         A modern monitoring service demo for the Advanced Web Applications course at Charles University.
@@ -16,57 +16,20 @@ export function LandingPage() {
         >
           Get Started
         </Link>
-        {/* <a
-          href="https://github.com/yourusername/monitoring-service"
-          className="text-sm font-semibold leading-6 text-gray-900"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          View on GitHub <span aria-hidden="true">→</span>
-        </a> */}
+      <a
+        href="https://gitlab.mff.cuni.cz/teaching/nswi153/2024-25/team-008"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="relative inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 rounded-full shadow-2xl transform transition-all duration-300 hover:scale-110 hover:shadow-3xl hover:from-orange-400 hover:via-red-400 hover:to-pink-400 focus:outline-none focus:ring-4 focus:ring-orange-300 animate-pulse hover:animate-none active:scale-95 overflow-hidden group"
+      >
+        <span className="absolute inset-0 bg-gradient-to-r from-orange-600 via-red-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full"></span>
+        <span className="relative z-10 flex items-center gap-2 animate-bounce">
+          View on GitLab 
+        </span>
+        <span className="absolute inset-0 bg-white opacity-20 blur-sm rounded-full animate-ping"></span>
+      </a>
+
       </div>
-{/* 
-      <div className="mt-20">
-        <h2 className="text-2xl font-bold text-gray-900">Features</h2>
-        <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="rounded-lg bg-white p-6 shadow">
-            <h3 className="text-lg font-semibold text-gray-900">Project Management</h3>
-            <p className="mt-2 text-gray-600">
-              Organize your monitors into projects with labels, descriptions, and tags.
-            </p>
-          </div>
-          <div className="rounded-lg bg-white p-6 shadow">
-            <h3 className="text-lg font-semibold text-gray-900">Multiple Monitor Types</h3>
-            <p className="mt-2 text-gray-600">
-              Support for various monitor types including ping and website monitoring.
-            </p>
-          </div>
-          <div className="rounded-lg bg-white p-6 shadow">
-            <h3 className="text-lg font-semibold text-gray-900">Real-time Monitoring</h3>
-            <p className="mt-2 text-gray-600">
-              Monitor your services in real-time with configurable check intervals.
-            </p>
-          </div>
-          <div className="rounded-lg bg-white p-6 shadow">
-            <h3 className="text-lg font-semibold text-gray-900">Visualization</h3>
-            <p className="mt-2 text-gray-600">
-              View monitoring results in various formats: list, calendar, and graph views.
-            </p>
-          </div>
-          <div className="rounded-lg bg-white p-6 shadow">
-            <h3 className="text-lg font-semibold text-gray-900">API Support</h3>
-            <p className="mt-2 text-gray-600">
-              Access your monitoring data through RESTful API and GraphQL endpoints.
-            </p>
-          </div>
-          <div className="rounded-lg bg-white p-6 shadow">
-            <h3 className="text-lg font-semibold text-gray-900">Status Badges</h3>
-            <p className="mt-2 text-gray-600">
-              Share your service status with customizable status badges.
-            </p>
-          </div>
-        </div>
-      </div> */}
     </div>
   );
 } 

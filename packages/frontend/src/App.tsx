@@ -8,7 +8,8 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60, // 1 minute
-      refetchInterval: 1000 * 5, // 5 seconds for live updates
+      // Removed refetchInterval to prevent constant reloading
+      refetchOnWindowFocus: false, // Prevent refetch when window regains focus
     },
   },
 });
