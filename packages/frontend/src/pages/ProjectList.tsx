@@ -1,7 +1,7 @@
 import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { PlusIcon } from '@heroicons/react/24/outline';
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -64,7 +64,7 @@ export function ProjectList() {
       }
       return response.json();
     },
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 
   useEffect(() => {
@@ -117,7 +117,6 @@ export function ProjectList() {
       setIsCreateModalOpen(false);
       setNewProject({ label: '', description: '', tags: '' });
       setFormError(null);
-      setActionError(null);
       setPage(1);
       queryClient.invalidateQueries({ queryKey: ['projects'] }).catch(() => {
         // Best effort; errors are surfaced via React Query
