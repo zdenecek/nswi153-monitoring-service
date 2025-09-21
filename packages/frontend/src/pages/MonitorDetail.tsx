@@ -1,27 +1,9 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Line } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-} from 'chart.js';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
+import { MonitorGraphView } from '../components/MonitorGraphView';
+import { MonitorCalendarView } from '../components/MonitorCalendarView';
+import { MonitorHistoryView } from '../components/MonitorHistoryView';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -56,6 +38,7 @@ export function MonitorDetail() {
   const { monitorId } = useParams<{ monitorId: string }>();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editedMonitor, setEditedMonitor] = useState<Partial<Monitor> | null>(null);
+  const [viewMode, setViewMode] = useState<'graph' | 'calendar' | 'history'>('graph');
   const navigate = useNavigate();
 
 
@@ -149,37 +132,6 @@ export function MonitorDetail() {
     );
   }
 
-  const chartData = {
-    labels: (monitor.checks || []).map((check) =>
-      new Date(check.timestamp).toLocaleTimeString()
-    ),
-    datasets: [
-      {
-        label: 'Response Time (ms)',
-        data: (monitor.checks || []).map((check) => check.responseTime),
-        borderColor: 'rgb(59, 130, 246)',
-        backgroundColor: 'rgba(59, 130, 246, 0.5)',
-      },
-    ],
-  };
-
-  const chartOptions = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: 'top' as const,
-      },
-      title: {
-        display: true,
-        text: 'Response Time History',
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-      },
-    },
-  };
 
   const uptime = (monitor.checks || []).length
     ? ((monitor.checks || []).filter((check) => check.status === 'up').length /
@@ -306,78 +258,50 @@ export function MonitorDetail() {
         </div>
       )}
 
-      <div className="mt-8">
-        <div className="overflow-hidden rounded-lg bg-white shadow">
-          <div className="p-6">
-            <Line options={chartOptions} data={chartData} />
-          </div>
+      {/* View Toggle */}
+      <div className="mt-8 flex justify-center">
+        <div className="inline-flex rounded-md shadow-sm" role="group">
+          <button
+            type="button"
+            onClick={() => setViewMode('graph')}
+            className={`px-4 py-2 text-sm font-medium border rounded-l-lg focus:z-10 focus:ring-2 focus:ring-blue-500 ${
+              viewMode === 'graph'
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            Graph
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('calendar')}
+            className={`px-4 py-2 text-sm font-medium border border-l-0 focus:z-10 focus:ring-2 focus:ring-blue-500 ${
+              viewMode === 'calendar'
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            Calendar
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('history')}
+            className={`px-4 py-2 text-sm font-medium border rounded-r-lg border-l-0 focus:z-10 focus:ring-2 focus:ring-blue-500 ${
+              viewMode === 'history'
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            History
+          </button>
         </div>
       </div>
 
-      <div className="mt-8">
-        <h2 className="text-lg font-medium text-gray-900">Recent Checks</h2>
-        <div className="mt-4 flow-root">
-          <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-            <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-              <table className="min-w-full divide-y divide-gray-300">
-                <thead>
-                  <tr>
-                    <th
-                      scope="col"
-                      className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0"
-                    >
-                      Timestamp
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-                    >
-                      Status
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-                    >
-                      Response Time
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-                    >
-                      Error
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {(monitor.checks || []).map((check) => (
-                    <tr key={check.id}>
-                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-0">
-                        {new Date(check.timestamp).toLocaleString()}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm">
-                        <span
-                          className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${check.status === 'up'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                            }`}
-                        >
-                          {check.status.toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {check.responseTime} ms
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {check.error || '-'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Render the selected view */}
+      {viewMode === 'graph' && <MonitorGraphView checks={monitor.checks || []} />}
+      {viewMode === 'calendar' && <MonitorCalendarView checks={monitor.checks || []} />}
+      {viewMode === 'history' && <MonitorHistoryView checks={monitor.checks || []} />}
+
 
       {isEditModalOpen && editedMonitor && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
