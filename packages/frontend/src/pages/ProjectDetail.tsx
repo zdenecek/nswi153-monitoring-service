@@ -109,6 +109,22 @@ export function ProjectDetail() {
               lastCheck = sortedStatuses[0].startTime;
             }
             
+            // Only use 'pending' if there are absolutely no checks available
+            if (status === 'pending' && (monitorData.checks?.length > 0 || monitorData.statuses?.length > 0)) {
+              // If we have checks but somehow didn't get a status, use the most recent check result
+              if (monitorData.checks?.length > 0) {
+                const sortedChecks = [...monitorData.checks].sort(
+                  (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+                );
+                status = sortedChecks[0].status;
+              } else if (monitorData.statuses?.length > 0) {
+                const sortedStatuses = [...monitorData.statuses].sort(
+                  (a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+                );
+                status = sortedStatuses[0].status === 'succeeded' ? 'up' : 'down';
+              }
+            }
+            
             console.log(`Monitor ${monitor.id} status: ${status}, lastCheck: ${lastCheck}`);
             
             // Return monitor with updated status information

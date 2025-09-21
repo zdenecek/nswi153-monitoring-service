@@ -62,7 +62,7 @@ export function MonitorDetail() {
 
       // Determine current status from the most recent check
       let currentStatus = data.status;
-      if (!currentStatus && checks.length > 0) {
+      if (checks.length > 0) {
         // Sort checks by timestamp (newest first)
         const sortedChecks = [...checks].sort((a, b) =>
           new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
