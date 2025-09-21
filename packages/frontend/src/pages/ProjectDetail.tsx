@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { CreateMonitorModal } from '../components/CreateMonitorModal';
@@ -47,6 +47,7 @@ const MONITORS_PAGE_SIZE = 5;
 
 export function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
+  const navigate = useNavigate();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditingProject, setIsEditingProject] = useState(false);
   const [projectFormError, setProjectFormError] = useState<string | null>(null);
@@ -206,6 +207,25 @@ export function ProjectDetail() {
     },
   });
 
+  const deleteProjectMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch(`${API_URL}/api/projects/${projectId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete project');
+      }
+    },
+    onSuccess: () => {
+      navigate('/projects');
+    },
+    onError: (error: Error) => {
+      window.alert(error.message);
+    },
+  });
+
   const monitors = project?.monitors ?? [];
   const filteredMonitors = monitors.filter((monitor) => {
     const matchesLabel = monitor.label.toLowerCase().includes(filters.label.toLowerCase());
@@ -231,6 +251,12 @@ export function ProjectDetail() {
   const handleDeleteMonitor = (monitorId: string) => {
     if (window.confirm('Are you sure you want to delete this monitor?')) {
       deleteMonitorMutation.mutate(monitorId);
+    }
+  };
+
+  const handleDeleteProject = () => {
+    if (window.confirm('Are you sure you want to delete this entire project? This will also delete all monitors in this project. This action cannot be undone.')) {
+      deleteProjectMutation.mutate();
     }
   };
 
@@ -267,7 +293,7 @@ export function ProjectDetail() {
             </div>
           )}
         </div>
-        <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none space-x-3">
+        <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none flex space-x-3">
           <button
             type="button"
             onClick={() => {
@@ -298,6 +324,14 @@ export function ProjectDetail() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
             Refresh
+          </button>
+          <button
+            type="button"
+            onClick={handleDeleteProject}
+            disabled={deleteProjectMutation.isPending}
+            className="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 disabled:cursor-not-allowed disabled:bg-red-400"
+          >
+            {deleteProjectMutation.isPending ? 'Deleting…' : 'Delete Project'}
           </button>
           <button
             type="button"

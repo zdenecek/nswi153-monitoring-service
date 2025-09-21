@@ -28,12 +28,10 @@ export function ProjectList() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newProject, setNewProject] = useState({ label: '', description: '', tags: '' });
   const [formError, setFormError] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({ label: '', tags: '' });
   const [appliedFilters, setAppliedFilters] = useState({ label: '', tags: '' });
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const {
     data: projectsResponse,
@@ -130,33 +128,6 @@ export function ProjectList() {
     },
   });
 
-  const deleteProjectMutation = useMutation({
-    mutationFn: async (projectId: string) => {
-      const response = await fetch(`${API_URL}/api/projects/${projectId}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Failed to delete project' }));
-        throw new Error(errorData.error || 'Failed to delete project');
-      }
-    },
-    onMutate: (projectId: string) => {
-      setPendingDeleteId(projectId);
-      setActionError(null);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] }).catch(() => {
-        // Ignore; React Query will handle refetch issues
-      });
-    },
-    onError: (mutationError: Error) => {
-      setActionError(mutationError.message);
-    },
-    onSettled: () => {
-      setPendingDeleteId(null);
-    },
-  });
 
   const handleApplyFilters = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -170,14 +141,6 @@ export function ProjectList() {
     setPage(1);
   };
 
-  const handleDeleteProject = (projectId: string) => {
-    const confirmed = window.confirm('Are you sure you want to delete this project? This action cannot be undone.');
-    if (!confirmed) {
-      return;
-    }
-
-    deleteProjectMutation.mutate(projectId);
-  };
 
   if (isLoading && !projectsResponse) {
     return (
@@ -277,9 +240,9 @@ export function ProjectList() {
         </form>
       </div>
 
-      {(actionError || queryError) && (
+      {queryError && (
         <div className="mt-4 rounded-md bg-red-50 p-4">
-          <p className="text-sm font-medium text-red-800">{actionError || queryError}</p>
+          <p className="text-sm font-medium text-red-800">{queryError}</p>
         </div>
       )}
 
@@ -308,18 +271,6 @@ export function ProjectList() {
                     <p className="text-sm font-medium text-gray-900">{project.label}</p>
                     <p className="mt-1 text-sm text-gray-500 truncate">{project.description}</p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      handleDeleteProject(project.id);
-                    }}
-                    disabled={pendingDeleteId === project.id && deleteProjectMutation.isPending}
-                    className="ml-4 inline-flex items-center rounded-md border border-transparent bg-red-100 px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-200 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {pendingDeleteId === project.id && deleteProjectMutation.isPending ? 'Deleting…' : 'Delete'}
-                  </button>
                 </div>
                 {project.tags && project.tags.length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-2">
