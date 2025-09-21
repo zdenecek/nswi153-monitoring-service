@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -22,11 +22,15 @@ interface EditProjectModalProps {
   project: Project;
 }
 
-export function EditProjectModal({ isOpen, onClose, project }: EditProjectModalProps) {
+export function EditProjectModal({
+  isOpen,
+  onClose,
+  project,
+}: EditProjectModalProps) {
   const [projectForm, setProjectForm] = useState<ProjectFormState>({
-    label: '',
-    description: '',
-    tags: '',
+    label: "",
+    description: "",
+    tags: "",
   });
   const [projectFormError, setProjectFormError] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -36,25 +40,29 @@ export function EditProjectModal({ isOpen, onClose, project }: EditProjectModalP
       setProjectForm({
         label: project.label,
         description: project.description,
-        tags: project.tags?.join(', ') ?? '',
+        tags: project.tags?.join(", ") ?? "",
       });
       setProjectFormError(null);
     }
   }, [project, isOpen]);
 
   const updateProjectMutation = useMutation({
-    mutationFn: async (payload: { label: string; description: string; tags: string[] }) => {
+    mutationFn: async (payload: {
+      label: string;
+      description: string;
+      tags: string[];
+    }) => {
       const response = await fetch(`${API_URL}/api/projects/${project.id}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update project');
+        throw new Error(errorData.error || "Failed to update project");
       }
 
       return response.json();
@@ -62,7 +70,7 @@ export function EditProjectModal({ isOpen, onClose, project }: EditProjectModalP
     onSuccess: () => {
       setProjectFormError(null);
       onClose();
-      queryClient.invalidateQueries({ queryKey: ['project', project.id] });
+      queryClient.invalidateQueries({ queryKey: ["project", project.id] });
     },
     onError: (error: Error) => {
       setProjectFormError(error.message);
@@ -77,17 +85,17 @@ export function EditProjectModal({ isOpen, onClose, project }: EditProjectModalP
     const trimmedDescription = projectForm.description.trim();
 
     if (!trimmedLabel) {
-      setProjectFormError('Label is required.');
+      setProjectFormError("Label is required.");
       return;
     }
 
     if (!trimmedDescription) {
-      setProjectFormError('Description is required.');
+      setProjectFormError("Description is required.");
       return;
     }
 
     const tags = projectForm.tags
-      .split(',')
+      .split(",")
       .map((tag) => tag.trim())
       .filter((tag) => tag.length > 0);
 
@@ -112,7 +120,7 @@ export function EditProjectModal({ isOpen, onClose, project }: EditProjectModalP
           <h3 className="text-lg font-medium text-gray-900 text-center">
             Edit Project Details
           </h3>
-          
+
           {projectFormError && (
             <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
               {projectFormError}
@@ -121,7 +129,10 @@ export function EditProjectModal({ isOpen, onClose, project }: EditProjectModalP
 
           <form className="mt-4 space-y-4" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="projectLabel" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="projectLabel"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Label
               </label>
               <input
@@ -134,9 +145,12 @@ export function EditProjectModal({ isOpen, onClose, project }: EditProjectModalP
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
               />
             </div>
-            
+
             <div>
-              <label htmlFor="projectDescription" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="projectDescription"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Description
               </label>
               <textarea
@@ -144,14 +158,20 @@ export function EditProjectModal({ isOpen, onClose, project }: EditProjectModalP
                 rows={3}
                 value={projectForm.description}
                 onChange={(e) =>
-                  setProjectForm((prev) => ({ ...prev, description: e.target.value }))
+                  setProjectForm((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
                 }
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
               />
             </div>
-            
+
             <div>
-              <label htmlFor="projectTags" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="projectTags"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Tags
               </label>
               <input
@@ -164,9 +184,11 @@ export function EditProjectModal({ isOpen, onClose, project }: EditProjectModalP
                 placeholder="tag-one, tag-two"
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
               />
-              <p className="mt-1 text-xs text-gray-500">Comma-separated list of tags.</p>
+              <p className="mt-1 text-xs text-gray-500">
+                Comma-separated list of tags.
+              </p>
             </div>
-            
+
             <div className="flex justify-end gap-3 pt-4">
               <button
                 type="button"
@@ -180,7 +202,7 @@ export function EditProjectModal({ isOpen, onClose, project }: EditProjectModalP
                 disabled={updateProjectMutation.isPending}
                 className="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:cursor-not-allowed disabled:bg-primary-400"
               >
-                {updateProjectMutation.isPending ? 'Saving...' : 'Save Changes'}
+                {updateProjectMutation.isPending ? "Saving..." : "Save Changes"}
               </button>
             </div>
           </form>

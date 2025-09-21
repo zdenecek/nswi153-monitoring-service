@@ -1,7 +1,7 @@
-import { Router } from 'express';
-import { AppDataSource } from '../index';
-import { Project } from '../entities';
-import { ProjectFilter } from '../types';
+import { Router } from "express";
+import { AppDataSource } from "../index";
+import { Project } from "../entities";
+import { ProjectFilter } from "../types";
 
 const router = Router();
 
@@ -49,27 +49,29 @@ const router = Router();
  *       200:
  *         description: List of projects
  */
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const filter = req.query as unknown as ProjectFilter;
-    const page = parseInt(filter.page?.toString() || '1');
-    const pageSize = parseInt(filter.pageSize?.toString() || '10');
+    const page = parseInt(filter.page?.toString() || "1");
+    const pageSize = parseInt(filter.pageSize?.toString() || "10");
     const skip = (page - 1) * pageSize;
 
     const queryBuilder = AppDataSource.getRepository(Project)
-      .createQueryBuilder('project')
+      .createQueryBuilder("project")
       .skip(skip)
       .take(pageSize);
 
     if (filter.label) {
-      queryBuilder.andWhere('project.label ILIKE :label', { label: `%${filter.label}%` });
+      queryBuilder.andWhere("project.label ILIKE :label", {
+        label: `%${filter.label}%`,
+      });
     }
 
     const rawTagsParam = req.query.tags;
     const parsedTags = Array.isArray(rawTagsParam)
       ? rawTagsParam
-      : typeof rawTagsParam === 'string'
-        ? rawTagsParam.split(',')
+      : typeof rawTagsParam === "string"
+        ? rawTagsParam.split(",")
         : [];
 
     const normalizedTags = parsedTags
@@ -77,13 +79,19 @@ router.get('/', async (req, res) => {
       .filter((tag): tag is string => Boolean(tag?.length));
 
     if (normalizedTags.length) {
-      queryBuilder.andWhere("string_to_array(project.tags, ',') @> :tags::text[]", {
-        tags: normalizedTags,
-      });
+      queryBuilder.andWhere(
+        "string_to_array(project.tags, ',') @> :tags::text[]",
+        {
+          tags: normalizedTags,
+        },
+      );
     }
 
     if (filter.sortBy) {
-      queryBuilder.orderBy(`project.${filter.sortBy}`, filter.sortOrder?.toUpperCase() as 'ASC' | 'DESC');
+      queryBuilder.orderBy(
+        `project.${filter.sortBy}`,
+        filter.sortOrder?.toUpperCase() as "ASC" | "DESC",
+      );
     }
 
     const [projects, total] = await queryBuilder.getManyAndCount();
@@ -95,8 +103,8 @@ router.get('/', async (req, res) => {
       pageSize,
     });
   } catch (error) {
-    console.error('Error fetching projects:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Error fetching projects:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -127,12 +135,14 @@ router.get('/', async (req, res) => {
  *       201:
  *         description: Project created successfully
  */
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const { label, description, tags } = req.body;
 
     if (!label || !description) {
-      return res.status(400).json({ error: 'Label and description are required' });
+      return res
+        .status(400)
+        .json({ error: "Label and description are required" });
     }
 
     const project = new Project();
@@ -140,11 +150,12 @@ router.post('/', async (req, res) => {
     project.description = description;
     project.tags = tags || [];
 
-    const savedProject = await AppDataSource.getRepository(Project).save(project);
+    const savedProject =
+      await AppDataSource.getRepository(Project).save(project);
     res.status(201).json(savedProject);
   } catch (error) {
-    console.error('Error creating project:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Error creating project:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -165,26 +176,26 @@ router.post('/', async (req, res) => {
  *       404:
  *         description: Project not found
  */
-router.get('/:id', async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
-    console.log('Fetching project with id:', req.params.id);
-    
+    console.log("Fetching project with id:", req.params.id);
+
     // Get the project with monitors but without statuses
     const project = await AppDataSource.getRepository(Project).findOne({
       where: { id: req.params.id },
-      relations: ['monitors'],
+      relations: ["monitors"],
     });
 
     if (!project) {
-      return res.status(404).json({ error: 'Project not found' });
+      return res.status(404).json({ error: "Project not found" });
     }
-    
+
     // Simply return the project with monitors
     // The frontend will handle fetching the status information
     res.json(project);
   } catch (error) {
-    console.error('Error fetching project:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Error fetching project:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -220,7 +231,7 @@ router.get('/:id', async (req, res) => {
  *       404:
  *         description: Project not found
  */
-router.put('/:id', async (req, res) => {
+router.put("/:id", async (req, res) => {
   try {
     const { label, description, tags } = req.body;
     const project = await AppDataSource.getRepository(Project).findOne({
@@ -228,18 +239,19 @@ router.put('/:id', async (req, res) => {
     });
 
     if (!project) {
-      return res.status(404).json({ error: 'Project not found' });
+      return res.status(404).json({ error: "Project not found" });
     }
 
     if (label) project.label = label;
     if (description) project.description = description;
     if (tags) project.tags = tags;
 
-    const updatedProject = await AppDataSource.getRepository(Project).save(project);
+    const updatedProject =
+      await AppDataSource.getRepository(Project).save(project);
     res.json(updatedProject);
   } catch (error) {
-    console.error('Error updating project:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Error updating project:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -260,19 +272,21 @@ router.put('/:id', async (req, res) => {
  *       404:
  *         description: Project not found
  */
-router.delete('/:id', async (req, res) => {
+router.delete("/:id", async (req, res) => {
   try {
-    const result = await AppDataSource.getRepository(Project).delete(req.params.id);
+    const result = await AppDataSource.getRepository(Project).delete(
+      req.params.id,
+    );
 
     if (result.affected === 0) {
-      return res.status(404).json({ error: 'Project not found' });
+      return res.status(404).json({ error: "Project not found" });
     }
 
     res.status(204).send();
   } catch (error) {
-    console.error('Error deleting project:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Error deleting project:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
-export const projectRouter = router; 
+export const projectRouter = router;

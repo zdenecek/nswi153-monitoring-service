@@ -1,13 +1,13 @@
-import { createBrowserRouter } from 'react-router-dom';
-import { Layout } from './components/Layout';
-import { LandingPage } from './pages/LandingPage';
-import { ProjectList } from './pages/ProjectList';
-import { ProjectDetail } from './pages/ProjectDetail';
-import { MonitorDetail } from './pages/MonitorDetail';
+import { createBrowserRouter } from "react-router-dom";
+import { Layout } from "./components/Layout";
+import { LandingPage } from "./pages/LandingPage";
+import { ProjectList } from "./pages/ProjectList";
+import { ProjectDetail } from "./pages/ProjectDetail";
+import { MonitorDetail } from "./pages/MonitorDetail";
 
 export const router = createBrowserRouter([
   {
-    path: '/',
+    path: "/",
     element: <Layout />,
     children: [
       {
@@ -15,17 +15,17 @@ export const router = createBrowserRouter([
         element: <LandingPage />,
       },
       {
-        path: 'projects',
+        path: "projects",
         element: <ProjectList />,
       },
       {
-        path: 'projects/:projectId',
+        path: "projects/:projectId",
         element: <ProjectDetail />,
       },
       {
-        path: 'monitors/:monitorId',
+        path: "monitors/:monitorId",
         element: <MonitorDetail />,
       },
     ],
   },
-]); 
+]);

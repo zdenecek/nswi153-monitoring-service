@@ -3,7 +3,7 @@
 export interface MonitorFilter {
   label?: string;
   type?: MonitorType;
-  status?: 'succeeded' | 'failed';
+  status?: "succeeded" | "failed";
   page?: number;
   pageSize?: number;
 }
@@ -13,17 +13,17 @@ export interface ProjectFilter {
   tags?: string | string[];
   page?: number;
   pageSize?: number;
-  sortBy?: 'label' | 'createdAt';
-  sortOrder?: 'asc' | 'desc';
+  sortBy?: "label" | "createdAt";
+  sortOrder?: "asc" | "desc";
 }
 
 export interface StatusFilter {
   monitorId?: string;
   from?: string;
   to?: string;
-  status?: 'succeeded' | 'failed';
+  status?: "succeeded" | "failed";
   page?: number;
   pageSize?: number;
 }
 
-export type MonitorType = 'ping' | 'website';
+export type MonitorType = "ping" | "website";

@@ -30,4 +30,4 @@ export const typeDefs = `#graphql
     ok: Boolean!
     responseTime: Int
   }
-`; 
+`;

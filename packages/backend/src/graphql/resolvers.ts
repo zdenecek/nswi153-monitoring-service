@@ -1,5 +1,5 @@
-import { AppDataSource } from '../index';
-import { Project, Monitor, MonitorStatus } from '../entities';
+import { AppDataSource } from "../index";
+import { Project, Monitor, MonitorStatus } from "../entities";
 
 interface StatusArgs {
   monitorIdentifier: string;
@@ -15,7 +15,7 @@ export const resolvers = {
   Query: {
     projects: async () => {
       const projects = await AppDataSource.getRepository(Project).find({
-        relations: ['monitors'],
+        relations: ["monitors"],
       });
 
       return projects.map((project: Project) => ({
@@ -28,23 +28,27 @@ export const resolvers = {
 
     status: async (_: unknown, { monitorIdentifier, from, to }: StatusArgs) => {
       const query = AppDataSource.getRepository(MonitorStatus)
-        .createQueryBuilder('status')
-        .where('status.monitorId = :monitorId', { monitorId: monitorIdentifier })
-        .orderBy('status.startTime', 'DESC');
+        .createQueryBuilder("status")
+        .where("status.monitorId = :monitorId", {
+          monitorId: monitorIdentifier,
+        })
+        .orderBy("status.startTime", "DESC");
 
       if (from) {
-        query.andWhere('status.startTime >= :from', { from: new Date(from * 1000) });
+        query.andWhere("status.startTime >= :from", {
+          from: new Date(from * 1000),
+        });
       }
 
       if (to) {
-        query.andWhere('status.startTime <= :to', { to: new Date(to * 1000) });
+        query.andWhere("status.startTime <= :to", { to: new Date(to * 1000) });
       }
 
       const statuses = await query.getMany();
 
       return statuses.map((status: MonitorStatus) => ({
         date: status.startTime.toISOString(),
-        ok: status.status === 'succeeded',
+        ok: status.status === "succeeded",
         responseTime: status.responseTime,
       }));
     },
@@ -67,4 +71,4 @@ export const resolvers = {
       }));
     },
   },
-}; 
+};

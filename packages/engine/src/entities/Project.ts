@@ -1,20 +1,27 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+} from "typeorm";
 
 @Entity()
 export class Project {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id!: string;
 
-  @Column('text')
+  @Column("text")
   label!: string;
 
-  @Column('text')
+  @Column("text")
   description!: string;
 
-  @Column('simple-array')
+  @Column("simple-array")
   tags!: string[];
 
-  @OneToMany('Monitor', 'project')
+  @OneToMany("Monitor", "project")
   monitors!: any[];
 
   @CreateDateColumn()
@@ -26,4 +33,4 @@ export class Project {
   constructor(partial: Partial<Project> = {}) {
     Object.assign(this, partial);
   }
-} 
+}

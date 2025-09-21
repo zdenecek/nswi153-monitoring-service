@@ -1,20 +1,29 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
-import { Project } from './Project';
-import { MonitorStatus } from './MonitorStatus';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+} from "typeorm";
+import { Project } from "./Project";
+import { MonitorStatus } from "./MonitorStatus";
 
-export type MonitorType = 'ping' | 'website';
+export type MonitorType = "ping" | "website";
 
 @Entity()
 export class Monitor {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id!: string;
 
   @Column()
   label!: string;
 
   @Column({
-    type: 'enum',
-    enum: ['website', 'ping'],
+    type: "enum",
+    enum: ["website", "ping"],
   })
   type!: MonitorType;
 
@@ -24,7 +33,7 @@ export class Monitor {
   @Column()
   host!: string;
 
-  @Column('int')
+  @Column("int")
   periodicity!: number;
 
   @Column()
@@ -37,14 +46,14 @@ export class Monitor {
   @Column({ nullable: true })
   checkStatus?: boolean;
 
-  @Column('simple-array', { nullable: true })
+  @Column("simple-array", { nullable: true })
   keywords?: string[];
 
-  @Column('uuid')
+  @Column("uuid")
   projectId!: string;
 
   @ManyToOne(() => Project, (project: Project) => project.monitors)
-  @JoinColumn({ name: 'projectId' })
+  @JoinColumn({ name: "projectId" })
   project!: Project;
 
   @OneToMany(() => MonitorStatus, (status: MonitorStatus) => status.monitor)
@@ -59,4 +68,4 @@ export class Monitor {
   constructor(partial: Partial<Monitor> = {}) {
     Object.assign(this, partial);
   }
-} 
+}

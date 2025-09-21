@@ -1,51 +1,60 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+} from "typeorm";
 
-export type MonitorType = 'ping' | 'website';
+export type MonitorType = "ping" | "website";
 
 @Entity()
 export class Monitor {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id!: string;
 
-  @Column('text')
+  @Column("text")
   label!: string;
 
   @Column({
-    type: 'enum',
-    enum: ['website', 'ping'],
+    type: "enum",
+    enum: ["website", "ping"],
   })
   type!: MonitorType;
 
-  @Column('text')
+  @Column("text")
   url!: string;
 
-  @Column('text')
+  @Column("text")
   host!: string;
 
-  @Column('int')
+  @Column("int")
   periodicity!: number;
 
-  @Column('text')
+  @Column("text")
   badgeLabel: string;
 
   // Ping monitor fields
-  @Column('int', { nullable: true })
+  @Column("int", { nullable: true })
   port?: number;
 
-  @Column('boolean', { nullable: true })
+  @Column("boolean", { nullable: true })
   checkStatus?: boolean;
 
-  @Column('simple-array', { nullable: true })
+  @Column("simple-array", { nullable: true })
   keywords?: string[];
 
-  @Column('uuid')
+  @Column("uuid")
   projectId!: string;
 
-  @ManyToOne('Project', 'monitors')
-  @JoinColumn({ name: 'projectId' })
+  @ManyToOne("Project", "monitors")
+  @JoinColumn({ name: "projectId" })
   project!: any;
 
-  @OneToMany('MonitorStatus', 'monitor')
+  @OneToMany("MonitorStatus", "monitor")
   statuses!: any[]; // Type will be inferred by TypeORM
 
   @CreateDateColumn()
@@ -57,4 +66,4 @@ export class Monitor {
   constructor(partial: Partial<Monitor> = {}) {
     Object.assign(this, partial);
   }
-} 
+}

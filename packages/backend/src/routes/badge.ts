@@ -1,6 +1,6 @@
-import { Router } from 'express';
-import { AppDataSource } from '../index';
-import { Monitor, MonitorStatus } from '../entities';
+import { Router } from "express";
+import { AppDataSource } from "../index";
+import { Monitor, MonitorStatus } from "../entities";
 
 const router = Router();
 
@@ -24,26 +24,26 @@ const router = Router();
  *             schema:
  *               type: string
  */
-router.get('/:monitorId', async (req, res) => {
+router.get("/:monitorId", async (req, res) => {
   try {
     const monitor = await AppDataSource.getRepository(Monitor).findOne({
       where: { id: req.params.monitorId },
     });
 
     if (!monitor) {
-      return res.status(404).json({ error: 'Monitor not found' });
+      return res.status(404).json({ error: "Monitor not found" });
     }
 
     // Get the latest status
     const latestStatus = await AppDataSource.getRepository(MonitorStatus)
-      .createQueryBuilder('status')
-      .where('status.monitorId = :monitorId', { monitorId: monitor.id })
-      .orderBy('status.startTime', 'DESC')
+      .createQueryBuilder("status")
+      .where("status.monitorId = :monitorId", { monitorId: monitor.id })
+      .orderBy("status.startTime", "DESC")
       .getOne();
 
     const label = monitor.badgeLabel;
-    const status = latestStatus?.status === 'succeeded' ? 'up' : 'down';
-    const color = latestStatus?.status === 'succeeded' ? 'green' : 'red';
+    const status = latestStatus?.status === "succeeded" ? "up" : "down";
+    const color = latestStatus?.status === "succeeded" ? "green" : "red";
 
     // Generate badge URL
     const badgeUrl = `https://img.shields.io/badge/${encodeURIComponent(label)}-${status}-${color}`;
@@ -52,13 +52,13 @@ router.get('/:monitorId', async (req, res) => {
     const response = await fetch(badgeUrl);
     const svg = await response.text();
 
-    res.setHeader('Content-Type', 'image/svg+xml');
-    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader("Content-Type", "image/svg+xml");
+    res.setHeader("Cache-Control", "no-cache");
     res.send(svg);
   } catch (error) {
-    console.error('Error generating badge:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Error generating badge:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
-export const badgeRouter = router; 
+export const badgeRouter = router;

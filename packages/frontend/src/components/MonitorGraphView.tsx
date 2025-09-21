@@ -1,4 +1,4 @@
-import { Line } from 'react-chartjs-2';
+import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -8,7 +8,7 @@ import {
   Title,
   Tooltip,
   Legend,
-} from 'chart.js';
+} from "chart.js";
 
 ChartJS.register(
   CategoryScale,
@@ -17,12 +17,12 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
 );
 
 interface MonitorCheck {
   id: string;
-  status: 'up' | 'down';
+  status: "up" | "down";
   responseTime: number;
   timestamp: string;
   error?: string;
@@ -35,14 +35,14 @@ interface MonitorGraphViewProps {
 export function MonitorGraphView({ checks }: MonitorGraphViewProps) {
   const chartData = {
     labels: checks.map((check) =>
-      new Date(check.timestamp).toLocaleTimeString()
+      new Date(check.timestamp).toLocaleTimeString(),
     ),
     datasets: [
       {
-        label: 'Response Time (ms)',
+        label: "Response Time (ms)",
         data: checks.map((check) => check.responseTime),
-        borderColor: 'rgb(59, 130, 246)',
-        backgroundColor: 'rgba(59, 130, 246, 0.5)',
+        borderColor: "rgb(59, 130, 246)",
+        backgroundColor: "rgba(59, 130, 246, 0.5)",
         tension: 0.1,
       },
     ],
@@ -52,11 +52,11 @@ export function MonitorGraphView({ checks }: MonitorGraphViewProps) {
     responsive: true,
     plugins: {
       legend: {
-        position: 'top' as const,
+        position: "top" as const,
       },
       title: {
         display: true,
-        text: 'Response Time History',
+        text: "Response Time History",
       },
     },
     scales: {
@@ -64,13 +64,13 @@ export function MonitorGraphView({ checks }: MonitorGraphViewProps) {
         beginAtZero: true,
         title: {
           display: true,
-          text: 'Response Time (ms)',
+          text: "Response Time (ms)",
         },
       },
       x: {
         title: {
           display: true,
-          text: 'Time',
+          text: "Time",
         },
       },
     },
