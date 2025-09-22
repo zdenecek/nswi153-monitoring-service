@@ -26,3 +26,9 @@ yarn-error.log*
 # OS files
 .DS_Store
 Thumbs.db
+################################################################################
+# Never commit compilation (by-)products and machine-specific settings.        #
+################################################################################
+.*
+!.gitignore
+!.gitattributes
