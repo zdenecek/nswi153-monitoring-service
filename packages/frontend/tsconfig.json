@@ -20,12 +20,7 @@
   },
   "include": [
     "src/**/*.ts",
-    "src/**/*.tsx",
-    "*.ts",
-    "*.tsx",
-    ".eslintrc.js",
-    "eslint.config.js",
-    "vite.config.ts"
+    "src/**/*.tsx"
   ],
   "references": [
     {
