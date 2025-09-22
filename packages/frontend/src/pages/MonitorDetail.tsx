@@ -102,6 +102,9 @@ export function MonitorDetail() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["monitor", monitorId] });
+      if (monitor?.projectId) {
+        void queryClient.invalidateQueries({ queryKey: ["project", monitor.projectId] });
+      }
       setIsEditModalOpen(false);
       setEditedMonitor(null);
     },
@@ -118,6 +121,7 @@ export function MonitorDetail() {
     },
     onSuccess: () => {
       if (monitor?.projectId) {
+        void queryClient.invalidateQueries({ queryKey: ["project", monitor.projectId] });
         navigate(`/projects/${monitor.projectId}`);
       } else {
         navigate("/projects"); // fallback if no projectId

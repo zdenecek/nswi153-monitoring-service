@@ -216,6 +216,7 @@ export function ProjectDetail() {
       }
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
       navigate("/projects");
     },
     onError: (error: Error) => {

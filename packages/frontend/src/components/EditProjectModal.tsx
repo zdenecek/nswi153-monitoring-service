@@ -71,6 +71,7 @@ export function EditProjectModal({
       setProjectFormError(null);
       onClose();
       queryClient.invalidateQueries({ queryKey: ["project", project.id] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
     },
     onError: (error: Error) => {
       setProjectFormError(error.message);
