@@ -1,4 +1,9 @@
 # Monitoring Service
+Monitor project health via uptime checks and keyword-based website monitoring.
+
+
+Frontend: React + Vite + Tailwind + React Query.
+Backend: Express + TypeORM + PostgreSQL with REST and GraphQL APIs, Docker Compose.
 
 Run with Docker:
 ```bash
