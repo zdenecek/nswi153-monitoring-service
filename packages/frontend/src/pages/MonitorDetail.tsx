@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { MonitorGraphView } from "../components/MonitorGraphView";
 import { MonitorCalendarView } from "../components/MonitorCalendarView";
 import { MonitorHistoryView } from "../components/MonitorHistoryView";
@@ -44,6 +44,7 @@ export function MonitorDetail() {
     "graph",
   );
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: monitor, isLoading } = useQuery<Monitor>({
     queryKey: ["monitor", monitorId],
@@ -100,7 +101,9 @@ export function MonitorDetail() {
       return response.json();
     },
     onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["monitor", monitorId] });
       setIsEditModalOpen(false);
+      setEditedMonitor(null);
     },
   });
   const deleteMonitorMutation = useMutation({
