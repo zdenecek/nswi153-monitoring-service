@@ -16,7 +16,9 @@ const ITEMS_PER_PAGE = 20;
 
 export function MonitorHistoryView({ checks }: MonitorHistoryViewProps) {
   const [currentPage, setCurrentPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState<"all" | "succeeded" | "failed">("all");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "succeeded" | "failed"
+  >("all");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
 
@@ -72,7 +74,8 @@ export function MonitorHistoryView({ checks }: MonitorHistoryViewProps) {
   const currentChecks = filteredChecks.slice(startIndex, endIndex);
   const totalFiltered = filteredChecks.length;
   const showingStart = totalFiltered === 0 ? 0 : startIndex + 1;
-  const showingEnd = totalFiltered === 0 ? 0 : Math.min(endIndex, totalFiltered);
+  const showingEnd =
+    totalFiltered === 0 ? 0 : Math.min(endIndex, totalFiltered);
 
   // Generate page numbers for pagination
   const getPageNumbers = () => {
@@ -158,7 +161,9 @@ export function MonitorHistoryView({ checks }: MonitorHistoryViewProps) {
                 id="status-filter"
                 value={statusFilter}
                 onChange={(event) =>
-                  setStatusFilter(event.target.value as "all" | "succeeded" | "failed")
+                  setStatusFilter(
+                    event.target.value as "all" | "succeeded" | "failed",
+                  )
                 }
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
               >
@@ -310,8 +315,8 @@ export function MonitorHistoryView({ checks }: MonitorHistoryViewProps) {
               <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm text-gray-700">
-                    Showing <span className="font-medium">{showingStart}</span> to{" "}
-                    <span className="font-medium">{showingEnd}</span> of{" "}
+                    Showing <span className="font-medium">{showingStart}</span>{" "}
+                    to <span className="font-medium">{showingEnd}</span> of{" "}
                     <span className="font-medium">{totalFiltered}</span> results
                   </p>
                 </div>

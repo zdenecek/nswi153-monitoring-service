@@ -3,24 +3,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-interface Monitor {
-  id: string;
-  label: string;
-  type: "ping" | "website";
-  url: string;
-  host: string;
-  periodicity: number;
-  status: "succeeded" | "failed" | "pending";
-  lastCheck: string | null;
-  createdAt: string;
-  updatedAt: string;
-  // Website monitor specific fields
-  checkStatus?: boolean;
-  keywords?: string[];
-  // Ping monitor specific fields
-  port?: number;
-}
-
 interface CreateMonitorModalProps {
   isOpen: boolean;
   onClose: () => void;

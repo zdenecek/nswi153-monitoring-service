@@ -111,7 +111,9 @@ export function ProjectDetail() {
 
                 // Get status from most recent status check
                 status =
-                  sortedStatuses[0].status === "succeeded" ? "succeeded" : "failed";
+                  sortedStatuses[0].status === "succeeded"
+                    ? "succeeded"
+                    : "failed";
                 lastCheck = sortedStatuses[0].startTime;
               }
 
@@ -136,7 +138,9 @@ export function ProjectDetail() {
                       new Date(a.startTime).getTime(),
                   );
                   status =
-                    sortedStatuses[0].status === "succeeded" ? "succeeded" : "failed";
+                    sortedStatuses[0].status === "succeeded"
+                      ? "succeeded"
+                      : "failed";
                 }
               }
 

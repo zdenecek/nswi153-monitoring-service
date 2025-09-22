@@ -58,13 +58,21 @@ export function MonitorDetail() {
       // Ensure checks exists - handle both checks and statuses arrays
       const checks =
         data.checks ||
-        data.statuses?.map((status: { id: string; status: string; responseTime?: number; startTime: string; error?: string }) => ({
-          id: status.id,
-          status: status.status === "succeeded" ? "succeeded" : "failed",
-          responseTime: status.responseTime,
-          timestamp: status.startTime,
-          error: status.error,
-        })) ||
+        data.statuses?.map(
+          (status: {
+            id: string;
+            status: string;
+            responseTime?: number;
+            startTime: string;
+            error?: string;
+          }) => ({
+            id: status.id,
+            status: status.status === "succeeded" ? "succeeded" : "failed",
+            responseTime: status.responseTime,
+            timestamp: status.startTime,
+            error: status.error,
+          }),
+        ) ||
         [];
 
       // Determine current status from the most recent check
@@ -103,7 +111,9 @@ export function MonitorDetail() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["monitor", monitorId] });
       if (monitor?.projectId) {
-        void queryClient.invalidateQueries({ queryKey: ["project", monitor.projectId] });
+        void queryClient.invalidateQueries({
+          queryKey: ["project", monitor.projectId],
+        });
       }
       setIsEditModalOpen(false);
       setEditedMonitor(null);
@@ -121,7 +131,9 @@ export function MonitorDetail() {
     },
     onSuccess: () => {
       if (monitor?.projectId) {
-        void queryClient.invalidateQueries({ queryKey: ["project", monitor.projectId] });
+        void queryClient.invalidateQueries({
+          queryKey: ["project", monitor.projectId],
+        });
         navigate(`/projects/${monitor.projectId}`);
       } else {
         navigate("/projects"); // fallback if no projectId
@@ -146,7 +158,8 @@ export function MonitorDetail() {
   }
 
   const uptime = (monitor.checks || []).length
-    ? ((monitor.checks || []).filter((check) => check.status === "succeeded").length /
+    ? ((monitor.checks || []).filter((check) => check.status === "succeeded")
+        .length /
         (monitor.checks || []).length) *
       100
     : 0;
