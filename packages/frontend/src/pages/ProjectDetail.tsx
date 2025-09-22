@@ -14,7 +14,7 @@ interface Monitor {
   url: string;
   host: string;
   periodicity: number;
-  status: "up" | "down" | "pending";
+  status: "succeeded" | "failed" | "pending";
   lastCheck: string | null;
   createdAt: string;
   updatedAt: string;
@@ -111,7 +111,7 @@ export function ProjectDetail() {
 
                 // Get status from most recent status check
                 status =
-                  sortedStatuses[0].status === "succeeded" ? "up" : "down";
+                  sortedStatuses[0].status === "succeeded" ? "succeeded" : "failed";
                 lastCheck = sortedStatuses[0].startTime;
               }
 
@@ -136,7 +136,7 @@ export function ProjectDetail() {
                       new Date(a.startTime).getTime(),
                   );
                   status =
-                    sortedStatuses[0].status === "succeeded" ? "up" : "down";
+                    sortedStatuses[0].status === "succeeded" ? "succeeded" : "failed";
                 }
               }
 
@@ -413,8 +413,8 @@ export function ProjectDetail() {
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
           >
             <option value="all">All</option>
-            <option value="up">Up</option>
-            <option value="down">Down</option>
+            <option value="succeeded">Succeeded</option>
+            <option value="Failed">Failed</option>
             <option value="pending">Pending</option>
           </select>
         </div>
@@ -430,7 +430,7 @@ export function ProjectDetail() {
                     scope="col"
                     className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0"
                   >
-                    Name
+                    Label
                   </th>
                   <th
                     scope="col"
@@ -486,9 +486,9 @@ export function ProjectDetail() {
                         {
                           <span
                             className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                              monitor.status === "up"
+                              monitor.status === "succeeded"
                                 ? "bg-green-100 text-green-800"
-                                : monitor.status === "down"
+                                : monitor.status === "failed"
                                   ? "bg-red-100 text-red-800"
                                   : "bg-gray-100 text-gray-800"
                             }`}

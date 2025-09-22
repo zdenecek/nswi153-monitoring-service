@@ -267,7 +267,6 @@ router.get("/:id", async (req, res) => {
       return res.status(404).json({ error: "Monitor not found" });
     }
 
-    // Fetch the last 100 statuses for this monitor, ordered by startTime DESC
     const statuses = await AppDataSource.getRepository("MonitorStatus")
       .createQueryBuilder("status")
       .where("status.monitorId = :monitorId", { monitorId: req.params.id })
@@ -278,7 +277,7 @@ router.get("/:id", async (req, res) => {
     // Transform the statuses into a format the frontend expects
     const checks = statuses.map((status) => ({
       id: status.id,
-      status: status.status === "succeeded" ? "up" : "down",
+      status: status.status === "succeeded" ? "succeeded" : "failed",
       responseTime: status.responseTime,
       timestamp: status.startTime,
       error: status.error,

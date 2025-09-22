@@ -1,8 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 interface MonitorCheck {
   id: string;
-  status: "up" | "down";
+  status: "succeeded" | "failed";
   responseTime: number;
   timestamp: string;
   error?: string;
@@ -16,6 +16,9 @@ const ITEMS_PER_PAGE = 20;
 
 export function MonitorHistoryView({ checks }: MonitorHistoryViewProps) {
   const [currentPage, setCurrentPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<"all" | "succeeded" | "failed">("all");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
 
   // Sort checks by timestamp (newest first)
   const sortedChecks = useMemo(() => {
@@ -25,11 +28,51 @@ export function MonitorHistoryView({ checks }: MonitorHistoryViewProps) {
     );
   }, [checks]);
 
+  const filteredChecks = useMemo(() => {
+    return sortedChecks.filter((check) => {
+      if (statusFilter !== "all" && check.status !== statusFilter) {
+        return false;
+      }
+
+      const checkTime = new Date(check.timestamp).getTime();
+
+      if (startTime) {
+        const start = new Date(startTime).getTime();
+        if (!Number.isNaN(start) && checkTime < start) {
+          return false;
+        }
+      }
+
+      if (endTime) {
+        const end = new Date(endTime).getTime();
+        if (!Number.isNaN(end) && checkTime > end) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [sortedChecks, statusFilter, startTime, endTime]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, startTime, endTime]);
+
   // Calculate pagination
-  const totalPages = Math.ceil(sortedChecks.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredChecks.length / ITEMS_PER_PAGE);
+  useEffect(() => {
+    if (totalPages === 0 && currentPage !== 1) {
+      setCurrentPage(1);
+    } else if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentChecks = sortedChecks.slice(startIndex, endIndex);
+  const currentChecks = filteredChecks.slice(startIndex, endIndex);
+  const totalFiltered = filteredChecks.length;
+  const showingStart = totalFiltered === 0 ? 0 : startIndex + 1;
+  const showingEnd = totalFiltered === 0 ? 0 : Math.min(endIndex, totalFiltered);
 
   // Generate page numbers for pagination
   const getPageNumbers = () => {
@@ -93,10 +136,79 @@ export function MonitorHistoryView({ checks }: MonitorHistoryViewProps) {
                 Check History
               </h3>
               <p className="mt-1 text-sm text-gray-500">
-                Showing {startIndex + 1} to{" "}
-                {Math.min(endIndex, sortedChecks.length)} of{" "}
-                {sortedChecks.length} checks
+                Showing {showingStart} to {showingEnd} of {totalFiltered} checks
+                {sortedChecks.length !== totalFiltered && (
+                  <span className="block text-xs text-gray-400">
+                    Filtered from {sortedChecks.length} total checks
+                  </span>
+                )}
               </p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+            <div>
+              <label
+                htmlFor="status-filter"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Status
+              </label>
+              <select
+                id="status-filter"
+                value={statusFilter}
+                onChange={(event) =>
+                  setStatusFilter(event.target.value as "all" | "succeeded" | "failed")
+                }
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+              >
+                <option value="all">All statuses</option>
+                <option value="succeeded">Succeeded</option>
+                <option value="failed">Failed</option>
+              </select>
+            </div>
+            <div>
+              <label
+                htmlFor="start-time-filter"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Start time
+              </label>
+              <input
+                id="start-time-filter"
+                type="datetime-local"
+                value={startTime}
+                onChange={(event) => setStartTime(event.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="end-time-filter"
+                className="block text-sm font-medium text-gray-700"
+              >
+                End time
+              </label>
+              <input
+                id="end-time-filter"
+                type="datetime-local"
+                value={endTime}
+                onChange={(event) => setEndTime(event.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+              />
+            </div>
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setStatusFilter("all");
+                  setStartTime("");
+                  setEndTime("");
+                }}
+                className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+              >
+                Clear filters
+              </button>
             </div>
           </div>
 
@@ -133,30 +245,41 @@ export function MonitorHistoryView({ checks }: MonitorHistoryViewProps) {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {currentChecks.map((check) => (
-                      <tr key={check.id} className="hover:bg-gray-50">
-                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-0">
-                          {new Date(check.timestamp).toLocaleString()}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm">
-                          <span
-                            className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                              check.status === "up"
-                                ? "bg-green-100 text-green-800"
-                                : "bg-red-100 text-red-800"
-                            }`}
-                          >
-                            {check.status.toUpperCase()}
-                          </span>
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          {check.responseTime} ms
-                        </td>
-                        <td className="px-3 py-4 text-sm text-gray-500 max-w-xs truncate">
-                          {check.error || "-"}
+                    {currentChecks.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={4}
+                          className="py-6 px-3 text-sm text-center text-gray-500"
+                        >
+                          No checks match the selected filters.
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      currentChecks.map((check) => (
+                        <tr key={check.id} className="hover:bg-gray-50">
+                          <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-0">
+                            {new Date(check.timestamp).toLocaleString()}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm">
+                            <span
+                              className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
+                                check.status === "succeeded"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-red-100 text-red-800"
+                              }`}
+                            >
+                              {check.status.toUpperCase()}
+                            </span>
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                            {check.responseTime} ms
+                          </td>
+                          <td className="px-3 py-4 text-sm text-gray-500 max-w-xs truncate">
+                            {check.error || "-"}
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -187,14 +310,9 @@ export function MonitorHistoryView({ checks }: MonitorHistoryViewProps) {
               <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm text-gray-700">
-                    Showing{" "}
-                    <span className="font-medium">{startIndex + 1}</span> to{" "}
-                    <span className="font-medium">
-                      {Math.min(endIndex, sortedChecks.length)}
-                    </span>{" "}
-                    of{" "}
-                    <span className="font-medium">{sortedChecks.length}</span>{" "}
-                    results
+                    Showing <span className="font-medium">{showingStart}</span> to{" "}
+                    <span className="font-medium">{showingEnd}</span> of{" "}
+                    <span className="font-medium">{totalFiltered}</span> results
                   </p>
                 </div>
                 <div>

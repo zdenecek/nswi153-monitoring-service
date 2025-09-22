@@ -22,7 +22,7 @@ ChartJS.register(
 
 interface MonitorCheck {
   id: string;
-  status: "up" | "down";
+  status: "succeeded" | "failed";
   responseTime: number;
   timestamp: string;
   error?: string;
