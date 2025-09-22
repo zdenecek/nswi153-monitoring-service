@@ -1,6 +1,6 @@
 interface MonitorCheck {
   id: string;
-  status: "up" | "down";
+  status: "succeeded" | "failed";
   responseTime: number;
   timestamp: string;
   error?: string;
@@ -79,7 +79,7 @@ export function MonitorCalendarView({ checks }: MonitorCalendarViewProps) {
 
         if (dayChecks.length > 0) {
           const failures = dayChecks.filter(
-            (check) => check.status === "down",
+            (check) => check.status === "failed",
           ).length;
           failureRate = (failures / dayChecks.length) * 100;
 

@@ -133,7 +133,7 @@ You may expand the schema to fit your needs. Keep in mind that you are not requi
 
 ## HTTP batch API
 
-The objective of this API is to provide [badge](https://shields.io/badges) support. In response to GET request to this API you need to send back SVG badge reflecting the last monitor status. The badge consists of left text (label), right text (value), and color. The label is determined by the monitor's badge label. The value is "up" or "down" based on the last monitor status. The color is green or red based on the last monitor status. Examples:
+The objective of this API is to provide [badge](https://shields.io/badges) support. In response to GET request to this API you need to send back SVG badge reflecting the last monitor status. The badge consists of left text (label), right text (value), and color. The label is determined by the monitor's badge label. The value is "succeeded" or "failed" based on the last monitor status. The color is green or red based on the last monitor status. Examples:
 
 ![](https://img.shields.io/badge/badge_label-up-green)  
 ![](https://img.shields.io/badge/badge_label-down-red)

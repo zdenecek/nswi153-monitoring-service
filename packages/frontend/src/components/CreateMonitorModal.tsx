@@ -10,7 +10,7 @@ interface Monitor {
   url: string;
   host: string;
   periodicity: number;
-  status: "up" | "down" | "pending";
+  status: "succeeded" | "failed" | "pending";
   lastCheck: string | null;
   createdAt: string;
   updatedAt: string;
@@ -111,7 +111,7 @@ export function CreateMonitorModal({
 
             // Client-side validation - check required fields
             if (!newMonitor.label) {
-              setFormError("Name is required");
+              setFormError("Label is required");
               return;
             }
 

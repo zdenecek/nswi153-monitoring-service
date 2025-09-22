@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 
 interface MonitorCheck {
   id: string;
-  status: "up" | "down";
+  status: "succeeded" | "failed";
   responseTime: number;
   timestamp: string;
   error?: string;
@@ -141,7 +141,7 @@ export function MonitorHistoryView({ checks }: MonitorHistoryViewProps) {
                         <td className="whitespace-nowrap px-3 py-4 text-sm">
                           <span
                             className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                              check.status === "up"
+                              check.status === "succeeded"
                                 ? "bg-green-100 text-green-800"
                                 : "bg-red-100 text-red-800"
                             }`}

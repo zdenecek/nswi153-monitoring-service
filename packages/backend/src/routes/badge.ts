@@ -42,7 +42,7 @@ router.get("/:monitorId", async (req, res) => {
       .getOne();
 
     const label = monitor.badgeLabel;
-    const status = latestStatus?.status === "succeeded" ? "up" : "down";
+    const status = latestStatus?.status === "succeeded" ? "succeeded" : "failed";
     const color = latestStatus?.status === "succeeded" ? "green" : "red";
 
     // Generate badge URL

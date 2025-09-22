@@ -9,7 +9,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 interface MonitorCheck {
   id: string;
-  status: "up" | "down";
+  status: "succeeded" | "failed";
   responseTime: number;
   timestamp: string;
   error?: string;
@@ -22,7 +22,7 @@ interface Monitor {
   url: string;
   host: string;
   periodicity: number;
-  status?: "up" | "down" | "pending";
+  status?: "succeeded" | "failed" | "pending";
   lastCheck?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -59,7 +59,7 @@ export function MonitorDetail() {
         data.checks ||
         data.statuses?.map((status: { id: string; status: string; responseTime?: number; startTime: string; error?: string }) => ({
           id: status.id,
-          status: status.status === "succeeded" ? "up" : "down",
+          status: status.status === "succeeded" ? "succeeded" : "failed",
           responseTime: status.responseTime,
           timestamp: status.startTime,
           error: status.error,
@@ -139,7 +139,7 @@ export function MonitorDetail() {
   }
 
   const uptime = (monitor.checks || []).length
-    ? ((monitor.checks || []).filter((check) => check.status === "up").length /
+    ? ((monitor.checks || []).filter((check) => check.status === "succeeded").length /
         (monitor.checks || []).length) *
       100
     : 0;
@@ -188,9 +188,9 @@ export function MonitorDetail() {
           <dd className="mt-1 text-3xl font-semibold tracking-tight text-gray-900">
             <span
               className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                monitor.status === "up"
+                monitor.status === "succeeded"
                   ? "bg-green-100 text-green-800"
-                  : monitor.status === "down"
+                  : monitor.status === "failed"
                     ? "bg-red-100 text-red-800"
                     : "bg-gray-100 text-gray-800"
               }`}
@@ -364,7 +364,7 @@ export function MonitorDetail() {
                   htmlFor="name"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Name
+                  Label
                 </label>
                 <input
                   type="text"
