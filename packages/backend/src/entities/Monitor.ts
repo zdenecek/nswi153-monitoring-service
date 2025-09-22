@@ -52,7 +52,10 @@ export class Monitor {
   @Column("uuid")
   projectId!: string;
 
-  @ManyToOne(() => Project, (project: Project) => project.monitors)
+  @ManyToOne(() => Project, (project: Project) => project.monitors, {
+    onDelete: "CASCADE",
+    onUpdate: "CASCADE",
+  })
   @JoinColumn({ name: "projectId" })
   project!: Project;
 
