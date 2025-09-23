@@ -419,7 +419,7 @@ export function ProjectDetail() {
           >
             <option value="all">All</option>
             <option value="succeeded">Succeeded</option>
-            <option value="Failed">Failed</option>
+            <option value="failed">Failed</option>
             <option value="pending">Pending</option>
           </select>
         </div>
